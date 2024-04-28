@@ -1,23 +1,11 @@
 import { syntaxTree } from "@codemirror/language";
 import {
 	RangeSetBuilder,
-	RangeSet,
-	Range,
 	StateField,
 	Transaction,
 	Extension,
-	Facet,
 } from "@codemirror/state";
-import {
-	Decoration,
-	DecorationSet,
-	EditorView,
-	PluginSpec,
-	PluginValue,
-	ViewPlugin,
-	ViewUpdate,
-	WidgetType,
-} from "@codemirror/view";
+import { Decoration, DecorationSet, EditorView } from "@codemirror/view";
 import { MathliveWidget } from "./mathlive-widget";
 
 export const mathliveListField = StateField.define<DecorationSet>({
@@ -26,7 +14,6 @@ export const mathliveListField = StateField.define<DecorationSet>({
 	},
 	update(oldState: DecorationSet, transaction: Transaction): DecorationSet {
 		const builder = new RangeSetBuilder<Decoration>();
-		// let begin = false;
 		let begin: number;
 		syntaxTree(transaction.state).iterate({
 			enter(node) {
@@ -42,10 +29,9 @@ export const mathliveListField = StateField.define<DecorationSet>({
 					builder.add(
 						listCharFrom + 3,
 						listCharFrom + 3,
-						Decoration.widget({
+						Decoration.replace({
 							widget: new MathliveWidget(
-								begin,
-								listCharFrom,
+								{ from: begin, to: listCharFrom },
 								transaction.state.sliceDoc(begin, listCharFrom)
 							),
 							block: true,

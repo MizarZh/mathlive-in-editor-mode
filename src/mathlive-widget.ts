@@ -26,15 +26,21 @@ export class MathliveWidget extends WidgetType {
 
 		// mfe -> editor
 		mfe.addEventListener("input", (ev: InputEvent) => {
-			if (this.equation !== ev.target.value) {
-				view.dispatch({
-					changes: {
-						from: parseInt(mfe.dataset.from),
-						to: parseInt(mfe.dataset.to),
-						insert: mfe.value,
-					},
-				});
-				this.equation = mfe.value;
+			const target = ev.target as MathfieldElement;
+			if (this.equation !== target.value) {
+				if (
+					mfe.dataset.from !== undefined &&
+					mfe.dataset.to !== undefined
+				) {
+					view.dispatch({
+						changes: {
+							from: parseInt(mfe.dataset.from),
+							to: parseInt(mfe.dataset.to),
+							insert: mfe.value,
+						},
+					});
+					this.equation = mfe.value;
+				}
 			}
 		});
 

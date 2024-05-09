@@ -14,16 +14,16 @@ import { MathfieldElement } from "mathlive";
 
 // Remember to rename these classes and interfaces!
 
-interface MyPluginSettings {
-	mySetting: string;
+interface ObsidianMathliveCodemirrorPluginSettings {
+	default: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: "default",
+const DEFAULT_SETTINGS: ObsidianMathliveCodemirrorPluginSettings = {
+	default: "default",
 };
 
 export default class ObsidianMathliveCodemirror extends Plugin {
-	settings: MyPluginSettings;
+	settings: ObsidianMathliveCodemirrorPluginSettings;
 
 	async onload() {
 		await this.loadSettings();

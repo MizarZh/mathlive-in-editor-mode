@@ -8,13 +8,13 @@ importers:
 
   .:
     dependencies:
-      '@codemirror/language':
-        specifier: ^6.10.1
-        version: 6.10.1
       mathlive:
         specifier: ^0.98.6
         version: 0.98.6
     devDependencies:
+      '@codemirror/language':
+        specifier: ^6.10.1
+        version: 6.10.1
       '@codemirror/state':
         specifier: ^6.4.1
         version: 6.4.1

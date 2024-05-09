@@ -7,11 +7,13 @@ interface WidgetConfig {
 }
 export class MathliveWidget extends WidgetType {
 	equation: string;
+	pre_eq: string;
 	config: WidgetConfig;
 	constructor(config: WidgetConfig, equation: string) {
 		super();
 		this.config = config;
 		this.equation = equation;
+		this.pre_eq = equation;
 	}
 	toDOM(view: EditorView): HTMLElement {
 		// element initialization
@@ -24,7 +26,7 @@ export class MathliveWidget extends WidgetType {
 
 		// mfe -> editor
 		mfe.addEventListener("input", (ev: InputEvent) => {
-			if (ev.data !== "insertText") {
+			if (this.equation !== ev.target.value) {
 				view.dispatch({
 					changes: {
 						from: parseInt(mfe.dataset.from),
@@ -32,6 +34,7 @@ export class MathliveWidget extends WidgetType {
 						insert: mfe.value,
 					},
 				});
+				this.equation = mfe.value;
 			}
 		});
 

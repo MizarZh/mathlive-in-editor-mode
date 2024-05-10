@@ -1,11 +1,10 @@
 {
-	"id": "obsidian-mathlive-codemirrorf",
-	"name": "Obsidian Mathlive Codemirror Pluginf",
+	"id": "mathlive-codemirror",
+	"name": "Mathlive Codemirror",
 	"version": "0.1.2",
 	"minAppVersion": "0.15.0",
-	"description": "Mathlive widget in codemirror editor",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Mathlive input inside the obsidian codemirror editor",
+	"author": "MizarZh",
+	"authorUrl": "https://github.com/MizarZh",
 	"isDesktopOnly": false
 }

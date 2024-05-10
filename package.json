@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-mathlive-codemirror",
+	"name": "mathlive-codemirror",
 	"version": "0.1.2",
-	"description": "Obsidian Mathlive Codemirror Plugin",
+	"description": "Mathlive input inside the obsidian codemirror editor",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

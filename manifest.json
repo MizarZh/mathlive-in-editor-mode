@@ -1,7 +1,7 @@
 {
-	"id": "obsidian-mathlive-codemirror",
-	"name": "Obsidian Mathlive Codemirror Plugin",
-	"version": "0.1.1",
+	"id": "obsidian-mathlive-codemirrorf",
+	"name": "Obsidian Mathlive Codemirror Pluginf",
+	"version": "0.1.2",
 	"minAppVersion": "0.15.0",
 	"description": "Mathlive widget in codemirror editor",
 	"author": "Obsidian",

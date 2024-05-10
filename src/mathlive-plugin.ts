@@ -21,7 +21,6 @@ export const mathliveListFieldWrapper = (
 			transaction: Transaction
 		): DecorationSet {
 			const builder = new RangeSetBuilder<Decoration>();
-			// if (settings.display) {
 			let begin: number, end: number;
 			syntaxTree(transaction.state).iterate({
 				enter(node) {
@@ -42,8 +41,8 @@ export const mathliveListFieldWrapper = (
 					) {
 						end = node.from;
 						builder.add(
-							end + 3,
-							end + 3,
+							end + 2,
+							end + 2,
 							Decoration.widget({
 								widget: new MathliveWidget(
 									{ from: begin, to: end },
@@ -51,14 +50,13 @@ export const mathliveListFieldWrapper = (
 									settings.display
 								),
 								block: true,
-								side: 100,
+								side: 10,
 							})
 						);
 						begin = end = -1;
 					}
 				},
 			});
-			// }
 			return builder.finish();
 		},
 		provide(field: StateField<DecorationSet>): Extension {

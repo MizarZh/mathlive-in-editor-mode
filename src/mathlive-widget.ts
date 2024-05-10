@@ -31,7 +31,7 @@ export class MathliveWidget extends WidgetType {
 		} else {
 			mfe.addClass("hidden");
 		}
-		
+
 		// mfe -> editor
 		mfe.addEventListener("input", (ev: InputEvent) => {
 			const target = ev.target as MathfieldElement;
@@ -60,7 +60,11 @@ export class MathliveWidget extends WidgetType {
 			"math-field"
 		)[0] as MathfieldElement;
 
-		mfe.style.display = this.display ? "block" : "none";
+		if (this.display) {
+			mfe.removeClass("hidden");
+		} else {
+			mfe.addClass("hidden");
+		}
 
 		mfe.dataset.from = `${this.config.from}`;
 		mfe.dataset.to = `${this.config.to}`;

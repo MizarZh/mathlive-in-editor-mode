@@ -3,6 +3,12 @@
 	width: 100%;
 }
 
+math-field.hidden {
+	display: none;
+}
+
+
+
 /* 0.98.6 */
 :root {
 	--ML__static-fonts: true;

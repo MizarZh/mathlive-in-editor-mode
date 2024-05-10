@@ -7,13 +7,14 @@ interface WidgetConfig {
 }
 export class MathliveWidget extends WidgetType {
 	equation: string;
-	pre_eq: string;
 	config: WidgetConfig;
-	constructor(config: WidgetConfig, equation: string) {
+	display: boolean;
+
+	constructor(config: WidgetConfig, equation: string, display: boolean) {
 		super();
 		this.config = config;
 		this.equation = equation;
-		this.pre_eq = equation;
+		this.display = display;
 	}
 	toDOM(view: EditorView): HTMLElement {
 		// element initialization
@@ -23,6 +24,9 @@ export class MathliveWidget extends WidgetType {
 		div.addClass("obsidian-mathlive-codemirror-div");
 		mfe.addClass("obsidian-mathlive-codemirror-math-field");
 		mfe.setValue(this.equation);
+		mfe.dataset.from = `${this.config.from}`;
+		mfe.dataset.to = `${this.config.to}`;
+		mfe.style.display = this.display ? "block" : "none";
 
 		// mfe -> editor
 		mfe.addEventListener("input", (ev: InputEvent) => {
@@ -51,6 +55,9 @@ export class MathliveWidget extends WidgetType {
 		const mfe = dom.getElementsByTagName(
 			"math-field"
 		)[0] as MathfieldElement;
+
+		mfe.style.display = this.display ? "block" : "none";
+
 		mfe.dataset.from = `${this.config.from}`;
 		mfe.dataset.to = `${this.config.to}`;
 

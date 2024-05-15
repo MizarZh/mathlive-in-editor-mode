@@ -22,7 +22,8 @@ export const mathliveListFieldWrapper = (
 		): DecorationSet {
 			const builder = new RangeSetBuilder<Decoration>();
 			let begin = -1,
-				end = -1;
+				end = -1,
+				isInline = false;
 			syntaxTree(transaction.state).iterate({
 				enter(node) {
 					// console.log(node.type.name);
@@ -30,31 +31,57 @@ export const mathliveListFieldWrapper = (
 					// console.log(transaction.state);
 
 					// exclude inline elements, for now
-					if (
-						node.type.name.contains("formatting-math-begin") &&
-						node.type.name.contains("math-block")
-					) {
-						begin = node.from + 2;
+					if (node.type.name.contains("formatting-math-begin")) {
+						if (node.type.name.contains("math-block"))
+							begin = node.from + 2;
+						else {
+							begin = node.from + 1;
+							isInline = true;
+						}
 					}
 					if (
 						node.type.name.contains("formatting-math-end") &&
 						begin !== -1
 					) {
 						end = node.from;
-						builder.add(
-							end + 2,
-							end + 2,
-							Decoration.widget({
-								widget: new MathliveWidget(
-									{ from: begin, to: end },
-									transaction.state.sliceDoc(begin, end),
-									settings.display
-								),
-								block: true,
-								side: 10,
-							})
-						);
+						if (!isInline) {
+							// block
+							builder.add(
+								end + 2,
+								end + 2,
+								Decoration.widget({
+									widget: new MathliveWidget(
+										{ from: begin, to: end },
+										transaction.state.sliceDoc(begin, end),
+										settings,
+										isInline
+									),
+									block: true,
+									side: 10,
+								})
+							);
+						} else {
+							if (settings.inlineDisplay)
+								// inline
+								builder.add(
+									end + 1,
+									end + 1,
+									Decoration.replace({
+										widget: new MathliveWidget(
+											{ from: begin, to: end },
+											transaction.state.sliceDoc(
+												begin,
+												end
+											),
+											settings,
+											isInline
+										),
+									})
+								);
+						}
+
 						begin = end = -1;
+						isInline = false;
 					}
 				},
 			});

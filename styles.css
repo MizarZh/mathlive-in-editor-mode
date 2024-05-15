@@ -1,14 +1,36 @@
-.obsidian-mathlive-codemirror-math-field {
+/* .obsidian-mathlive-codemirror-math-field {
 	width: 100%;
+} */
+
+math-field {
+	display: block;
+	--caret-color: #ddd;
+	--contains-highlight-background-color: #767676;
+}
+
+.obsidian-mathlive-codemirror-wrapper.inline {
+	display: inline;
+	margin: 0 3px;
+}
+
+.obsidian-mathlive-codemirror-wrapper.inline math-field {
+	display: inline-block;
 }
 
 math-field.hidden {
 	display: none;
 }
 
-math-field {
-	--caret-color: #ddd;
-	--contains-highlight-background-color: #767676;
+.obsidian-mathlive-codemirror-wrapper.inline math-field.hidden {
+	display: none;
+}
+
+math-field.hide-keyboard::part(virtual-keyboard-toggle) {
+	display: none;
+}
+
+math-field.hide-menu::part(menu-toggle) {
+	display: none;
 }
 
 /* 0.98.6 */

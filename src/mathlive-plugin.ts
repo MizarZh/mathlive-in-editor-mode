@@ -21,7 +21,8 @@ export const mathliveListFieldWrapper = (
 			transaction: Transaction
 		): DecorationSet {
 			const builder = new RangeSetBuilder<Decoration>();
-			let begin: number, end: number;
+			let begin = -1,
+				end = -1;
 			syntaxTree(transaction.state).iterate({
 				enter(node) {
 					// console.log(node.type.name);

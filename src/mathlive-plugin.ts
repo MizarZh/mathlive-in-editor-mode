@@ -6,11 +6,11 @@ import {
 	Extension,
 } from "@codemirror/state";
 import { Decoration, DecorationSet, EditorView } from "@codemirror/view";
-import { MathliveWidget } from "./mathlive-widget";
-import { MathliveEditorModePluginSettings } from "./setting";
+import { MathLiveWidget } from "./mathlive-widget";
+import { MathLiveEditorModePluginSettings } from "./setting";
 
 export const mathliveListFieldWrapper = (
-	settings: MathliveEditorModePluginSettings
+	settings: MathLiveEditorModePluginSettings
 ) => {
 	const mathliveListField = StateField.define<DecorationSet>({
 		create(state): DecorationSet {
@@ -49,7 +49,7 @@ export const mathliveListFieldWrapper = (
 								end + 2,
 								end + 2,
 								Decoration.widget({
-									widget: new MathliveWidget(
+									widget: new MathLiveWidget(
 										{ from: begin, to: end },
 										transaction.state.sliceDoc(begin, end),
 										settings,
@@ -66,7 +66,7 @@ export const mathliveListFieldWrapper = (
 									end + 1,
 									end + 1,
 									Decoration.replace({
-										widget: new MathliveWidget(
+										widget: new MathLiveWidget(
 											{ from: begin, to: end },
 											transaction.state.sliceDoc(
 												begin,

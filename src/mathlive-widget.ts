@@ -1,21 +1,21 @@
 import { EditorView, WidgetType } from "@codemirror/view";
 import { MathfieldElement } from "mathlive";
-import { MathliveEditorModePluginSettings } from "./setting";
+import { MathLiveEditorModePluginSettings } from "./setting";
 
 interface WidgetConfig {
 	from: number;
 	to: number;
 }
-export class MathliveWidget extends WidgetType {
+export class MathLiveWidget extends WidgetType {
 	equation: string;
 	config: WidgetConfig;
-	settings: MathliveEditorModePluginSettings;
+	settings: MathLiveEditorModePluginSettings;
 	isInline: boolean;
 
 	constructor(
 		config: WidgetConfig,
 		equation: string,
-		settings: MathliveEditorModePluginSettings,
+		settings: MathLiveEditorModePluginSettings,
 		isInline: boolean
 	) {
 		super();

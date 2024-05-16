@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting, Notice } from "obsidian";
-import MathliveInEditorMode from "./main";
+import MathLiveInEditorMode from "./main";
 
-export interface MathliveEditorModePluginSettings {
+export interface MathLiveEditorModePluginSettings {
 	display: boolean;
 	blockDisplay: boolean;
 	blockMenuIcon: boolean;
@@ -11,7 +11,7 @@ export interface MathliveEditorModePluginSettings {
 	inlineKeyboardIcon: boolean;
 }
 
-export const DEFAULT_SETTINGS: MathliveEditorModePluginSettings = {
+export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
 	display: true,
 	blockDisplay: true,
 	blockMenuIcon: true,
@@ -21,10 +21,10 @@ export const DEFAULT_SETTINGS: MathliveEditorModePluginSettings = {
 	inlineKeyboardIcon: false,
 };
 
-export class MathliveEditorModeSettingsTab extends PluginSettingTab {
-	plugin: MathliveInEditorMode;
+export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
+	plugin: MathLiveInEditorMode;
 
-	constructor(app: App, plugin: MathliveInEditorMode) {
+	constructor(app: App, plugin: MathLiveInEditorMode) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -55,7 +55,7 @@ export class MathliveEditorModeSettingsTab extends PluginSettingTab {
 						this.app.setting.openTabById("hotkeys");
 						// @ts-ignore
 						const tab = this.app.setting.activeTab;
-						tab.headerComponent.components[1].inputEl.value = `Toggle MathLive Block`;
+						tab.headerComponent.components[1].inputEl.value = `Toggle MathLive block`;
 						tab.updateHotkeyVisibility();
 					});
 			});

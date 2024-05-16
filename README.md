@@ -1,6 +1,6 @@
-# Mathlive in Editor Mode
+# MathLive in Editor Mode
 
-[Mathlive](https://github.com/arnog/mathlive) input in obsidian editor mode.
+[MathLive](https://github.com/arnog/mathlive) input in obsidian editor mode.
 
 ## Feature
 - [x] Basic input function

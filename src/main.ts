@@ -2,13 +2,13 @@ import { Plugin } from "obsidian";
 import { mathliveListFieldWrapper } from "./mathlive-plugin";
 import { MathfieldElement } from "mathlive";
 import {
-	MathliveEditorModePluginSettings,
+	MathLiveEditorModePluginSettings,
 	DEFAULT_SETTINGS,
-	MathliveEditorModeSettingsTab,
+	MathLiveEditorModeSettingsTab,
 } from "./setting";
 
-export default class MathliveInEditorMode extends Plugin {
-	settings: MathliveEditorModePluginSettings;
+export default class MathLiveInEditorMode extends Plugin {
+	settings: MathLiveEditorModePluginSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -16,13 +16,13 @@ export default class MathliveInEditorMode extends Plugin {
 		if (customElements.get("math-field") === undefined)
 			customElements.define("math-field", MathfieldElement);
 
-		this.addSettingTab(new MathliveEditorModeSettingsTab(this.app, this));
+		this.addSettingTab(new MathLiveEditorModeSettingsTab(this.app, this));
 
 		this.registerEditorExtension(mathliveListFieldWrapper(this.settings));
 
 		this.addCommand({
 			id: "toggle-mathfield",
-			name: "Toggle MathLive Block",
+			name: "Toggle MathLive block",
 			editorCallback: async (editor, view) => {
 				this.settings.display = !this.settings.display;
 				await this.saveSettings();

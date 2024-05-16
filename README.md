@@ -1,10 +1,10 @@
-# obsidian-mathlive-codemirror
+# Mathlive in Editor Mode
 
-[Mathlive](https://github.com/arnog/mathlive) input inside the obsidian codemirror editor.
+[Mathlive](https://github.com/arnog/mathlive) input in obsidian editor mode.
 
 ## Feature
 - [x] Basic input function
-- [x] Toggle mathlive display
+- [x] Toggle mathlive display (global, block or inline)
 - [ ] Switch between mathlive and builtin mathjax
 - [ ] Different display modes
 

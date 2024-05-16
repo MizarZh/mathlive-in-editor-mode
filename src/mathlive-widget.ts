@@ -1,6 +1,6 @@
 import { EditorView, WidgetType } from "@codemirror/view";
 import { MathfieldElement } from "mathlive";
-import { ObsidianMathliveCodemirrorPluginSettings } from "./setting";
+import { MathliveEditorModePluginSettings } from "./setting";
 
 interface WidgetConfig {
 	from: number;
@@ -9,13 +9,13 @@ interface WidgetConfig {
 export class MathliveWidget extends WidgetType {
 	equation: string;
 	config: WidgetConfig;
-	settings: ObsidianMathliveCodemirrorPluginSettings;
+	settings: MathliveEditorModePluginSettings;
 	isInline: boolean;
 
 	constructor(
 		config: WidgetConfig,
 		equation: string,
-		settings: ObsidianMathliveCodemirrorPluginSettings,
+		settings: MathliveEditorModePluginSettings,
 		isInline: boolean
 	) {
 		super();

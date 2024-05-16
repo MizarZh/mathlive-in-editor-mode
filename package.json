@@ -1,7 +1,7 @@
 {
-	"name": "mathlive-codemirror",
-	"version": "0.1.3",
-	"description": "Mathlive input inside the obsidian codemirror editor",
+	"name": "mathlive-in-editor-mode",
+	"version": "0.1.4",
+	"description": "Mathlive input in editor mode",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

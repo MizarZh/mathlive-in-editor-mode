@@ -7,10 +7,10 @@ import {
 } from "@codemirror/state";
 import { Decoration, DecorationSet, EditorView } from "@codemirror/view";
 import { MathliveWidget } from "./mathlive-widget";
-import { ObsidianMathliveCodemirrorPluginSettings } from "./setting";
+import { MathliveEditorModePluginSettings } from "./setting";
 
 export const mathliveListFieldWrapper = (
-	settings: ObsidianMathliveCodemirrorPluginSettings
+	settings: MathliveEditorModePluginSettings
 ) => {
 	const mathliveListField = StateField.define<DecorationSet>({
 		create(state): DecorationSet {
@@ -30,7 +30,6 @@ export const mathliveListFieldWrapper = (
 					// console.log(EditorView.editable);
 					// console.log(transaction.state);
 
-					// exclude inline elements, for now
 					if (node.type.name.contains("formatting-math-begin")) {
 						if (node.type.name.contains("math-block"))
 							begin = node.from + 2;

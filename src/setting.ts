@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting, Notice } from "obsidian";
-import ObsidianMathliveCodemirror from "./main";
+import MathliveInEditorMode from "./main";
 
-export interface ObsidianMathliveCodemirrorPluginSettings {
+export interface MathliveEditorModePluginSettings {
 	display: boolean;
 	blockDisplay: boolean;
 	blockMenuIcon: boolean;
@@ -11,7 +11,7 @@ export interface ObsidianMathliveCodemirrorPluginSettings {
 	inlineKeyboardIcon: boolean;
 }
 
-export const DEFAULT_SETTINGS: ObsidianMathliveCodemirrorPluginSettings = {
+export const DEFAULT_SETTINGS: MathliveEditorModePluginSettings = {
 	display: true,
 	blockDisplay: true,
 	blockMenuIcon: true,
@@ -21,10 +21,10 @@ export const DEFAULT_SETTINGS: ObsidianMathliveCodemirrorPluginSettings = {
 	inlineKeyboardIcon: false,
 };
 
-export class ObsidianMathliveCodemirrorSettingTab extends PluginSettingTab {
-	plugin: ObsidianMathliveCodemirror;
+export class MathliveEditorModeSettingsTab extends PluginSettingTab {
+	plugin: MathliveInEditorMode;
 
-	constructor(app: App, plugin: ObsidianMathliveCodemirror) {
+	constructor(app: App, plugin: MathliveInEditorMode) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -32,11 +32,11 @@ export class ObsidianMathliveCodemirrorSettingTab extends PluginSettingTab {
 	display(): void {
 		this.containerEl.empty();
 
-		this.containerEl.createEl("h1", { text: "General Settings" });
+		new Setting(this.containerEl).setName('Global').setHeading();
 
 		new Setting(this.containerEl)
-			.setName("Display mathlive block")
-			.setDesc("Toggle display state of mathlive")
+			.setName("Display MathLive block")
+			.setDesc("Toggle display state of MathLive")
 			.addToggle((cb) => {
 				cb.setValue(this.plugin.settings.display);
 				cb.onChange(async (ev) => {
@@ -55,17 +55,17 @@ export class ObsidianMathliveCodemirrorSettingTab extends PluginSettingTab {
 						this.app.setting.openTabById("hotkeys");
 						// @ts-ignore
 						const tab = this.app.setting.activeTab;
-						tab.headerComponent.components[1].inputEl.value = `Toggle Mathlive Block`;
+						tab.headerComponent.components[1].inputEl.value = `Toggle MathLive Block`;
 						tab.updateHotkeyVisibility();
 					});
 			});
 
 		if (this.plugin.settings.display) {
-			this.containerEl.createEl("h1", { text: "Block Settings" });
+			new Setting(this.containerEl).setName('Block').setHeading();
 
 			new Setting(this.containerEl)
 				.setName("Display block equation")
-				.setDesc("Enable mathlive for block equation")
+				.setDesc("Enable MathLive for block equation")
 				.addToggle((cb) => {
 					cb.setValue(this.plugin.settings.blockDisplay);
 					cb.onChange(async (ev) => {
@@ -99,11 +99,11 @@ export class ObsidianMathliveCodemirrorSettingTab extends PluginSettingTab {
 					});
 				});
 
-			this.containerEl.createEl("h1", { text: "Inline Settings" });
+				new Setting(this.containerEl).setName('Inline').setHeading();
 
 			new Setting(this.containerEl)
 				.setName("Display inline equation")
-				.setDesc("Enable mathlive for inline equation")
+				.setDesc("Enable MathLive for inline equation")
 				.addToggle((cb) => {
 					cb.setValue(this.plugin.settings.inlineDisplay);
 					cb.onChange(async (ev) => {

@@ -32,8 +32,6 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 	display(): void {
 		this.containerEl.empty();
 
-		new Setting(this.containerEl).setName('MathLive in Edit Mode').setHeading();
-
 		new Setting(this.containerEl)
 			.setName("Display MathLive block")
 			.setDesc("Toggle display state of MathLive")

@@ -1,6 +1,6 @@
 {
 	"name": "mathlive-in-editor-mode",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"description": "MathLive input in editor mode",
 	"main": "main.js",
 	"scripts": {

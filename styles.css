@@ -2,10 +2,13 @@
 	width: 100%;
 } */
 
-math-field {
-	display: block;
+.theme-dark {
 	--caret-color: #ddd;
 	--contains-highlight-background-color: #767676;
+}
+
+math-field {
+	display: block;
 }
 
 .obsidian-mathlive-codemirror-wrapper.inline {

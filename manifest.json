@@ -1,7 +1,7 @@
 {
 	"id": "mathlive-in-editor-mode",
 	"name": "MathLive in Editor Mode",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"minAppVersion": "0.15.0",
 	"description": "MathLive input in editor mode",
 	"author": "MizarZh",

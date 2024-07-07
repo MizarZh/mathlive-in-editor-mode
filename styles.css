@@ -7,25 +7,26 @@
 	--contains-highlight-background-color: #767676;
 }
 
-math-field {
+.obsidian-mathlive-codemirror-wrapper math-field {
 	display: block;
 }
 
 .obsidian-mathlive-codemirror-wrapper.inline {
 	display: inline;
-	margin: 0 3px;
 }
 
 .obsidian-mathlive-codemirror-wrapper.inline math-field {
 	display: inline-block;
+	margin: 0 3px;
 }
 
-math-field.hidden {
+.obsidian-mathlive-codemirror-wrapper.hidden {
 	display: none;
 }
 
-.obsidian-mathlive-codemirror-wrapper.inline math-field.hidden {
+.obsidian-mathlive-codemirror-wrapper.hidden math-field {
 	display: none;
+	margin: 0;
 }
 
 math-field.hide-keyboard::part(virtual-keyboard-toggle) {

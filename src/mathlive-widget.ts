@@ -76,11 +76,11 @@ export class MathLiveWidget extends WidgetType {
 	style(mfe: MathfieldElement, div: HTMLDivElement) {
 		if (this.settings.display) {
 			// display
-			mfe.removeClass("hidden");
+			div.removeClass("hidden");
 			if (this.isInline) {
 				// inline
 				div.addClass("inline");
-				this.changeCSSClass(this.settings.inlineDisplay, mfe, "hidden");
+				this.changeCSSClass(this.settings.inlineDisplay, div, "hidden");
 				this.changeCSSClass(
 					this.settings.inlineKeyboardIcon,
 					mfe,
@@ -94,7 +94,7 @@ export class MathLiveWidget extends WidgetType {
 			} else {
 				// block
 				div.removeClass("inline");
-				this.changeCSSClass(this.settings.blockDisplay, mfe, "hidden");
+				this.changeCSSClass(this.settings.blockDisplay, div, "hidden");
 				this.changeCSSClass(
 					this.settings.blockKeyboardIcon,
 					mfe,
@@ -107,7 +107,7 @@ export class MathLiveWidget extends WidgetType {
 				);
 			}
 		} else {
-			mfe.addClass("hidden");
+			div.addClass("hidden");
 		}
 	}
 	changeCSSClass(c: boolean, elem: HTMLElement, className: string) {

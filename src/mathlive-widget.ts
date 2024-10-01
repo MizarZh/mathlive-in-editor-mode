@@ -1,7 +1,8 @@
 import { EditorView, WidgetType } from "@codemirror/view";
 import { MathfieldElement } from "mathlive";
-import { MathLiveEditorModePluginSettings } from "./setting";
-
+import { MathLiveEditorModePluginSettings, Global } from "./setting";
+import { parse as json5parse } from "json5";
+import { Notice } from "obsidian";
 interface WidgetConfig {
 	from: number;
 	to: number;
@@ -11,18 +12,21 @@ export class MathLiveWidget extends WidgetType {
 	config: WidgetConfig;
 	settings: MathLiveEditorModePluginSettings;
 	isInline: boolean;
+	global: Global;
 
 	constructor(
 		config: WidgetConfig,
 		equation: string,
 		settings: MathLiveEditorModePluginSettings,
-		isInline: boolean
+		isInline: boolean,
+		global: Global
 	) {
 		super();
 		this.config = config;
 		this.equation = equation;
 		this.settings = settings;
 		this.isInline = isInline;
+		this.global = global;
 	}
 	toDOM(view: EditorView): HTMLElement {
 		// element initialization
@@ -34,6 +38,7 @@ export class MathLiveWidget extends WidgetType {
 		mfe.setValue(this.equation);
 		mfe.dataset.from = `${this.config.from}`;
 		mfe.dataset.to = `${this.config.to}`;
+		this.global.previousMacros = this.settings.macros;
 		this.style(mfe, div);
 		// mfe -> editor
 		mfe.addEventListener("input", (ev: InputEvent) => {
@@ -62,6 +67,50 @@ export class MathLiveWidget extends WidgetType {
 		const mfe = dom.getElementsByTagName(
 			"math-field"
 		)[0] as MathfieldElement;
+
+		try {
+			if (this.global.previousMacros !== this.settings.macros) {
+				const macrosJSON = json5parse(this.settings.macros);
+				this.global.previousMacros = this.settings.macros;
+				mfe.macros = { ...mfe.macros, ...macrosJSON };
+			}
+		} catch (e) {
+			new Notice("MathLive: Incorrect macro settings.");
+			console.log(e);
+		}
+
+		console.log(this.settings.inlineShortcuts);
+		try {
+			if (
+				this.global.previousInlineShortcuts !==
+				this.settings.inlineShortcuts
+			) {
+				const inlineShortcutsJSON = json5parse(
+					this.settings.inlineShortcuts
+				);
+
+				this.global.previousInlineShortcuts =
+					this.settings.inlineShortcuts;
+				mfe.inlineShortcuts = {
+					...mfe.inlineShortcuts,
+					...inlineShortcutsJSON,
+				};
+			}
+		} catch (e) {
+			new Notice("MathLive: Incorrect inline shortcuts settings.");
+			console.log(e);
+		}
+
+		try {
+			if (this.global.previousKeybindings !== this.settings.keybindings) {
+				const keybindingsJSON = json5parse(this.settings.keybindings);
+				this.global.previousKeybindings = this.settings.keybindings;
+				mfe.keybindings = { ...mfe.keybindings, ...keybindingsJSON };
+			}
+		} catch (e) {
+			new Notice("MathLive: Incorrect keybindings settings.");
+			console.log(e);
+		}
 
 		this.style(mfe, dom as HTMLDivElement);
 

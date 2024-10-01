@@ -5,10 +5,12 @@ import {
 	MathLiveEditorModePluginSettings,
 	DEFAULT_SETTINGS,
 	MathLiveEditorModeSettingsTab,
+	Global,
 } from "./setting";
 
 export default class MathLiveInEditorMode extends Plugin {
 	settings: MathLiveEditorModePluginSettings;
+	global: Global;
 
 	async onload() {
 		await this.loadSettings();
@@ -18,7 +20,15 @@ export default class MathLiveInEditorMode extends Plugin {
 
 		this.addSettingTab(new MathLiveEditorModeSettingsTab(this.app, this));
 
-		this.registerEditorExtension(mathliveListFieldWrapper(this.settings));
+		this.global = {
+			previousMacros: "",
+			previousInlineShortcuts: "",
+			previousKeybindings: "",
+		};
+
+		this.registerEditorExtension(
+			mathliveListFieldWrapper(this.settings, this.global)
+		);
 
 		this.addCommand({
 			id: "toggle-mathfield",

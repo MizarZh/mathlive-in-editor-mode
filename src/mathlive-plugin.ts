@@ -7,10 +7,11 @@ import {
 } from "@codemirror/state";
 import { Decoration, DecorationSet, EditorView } from "@codemirror/view";
 import { MathLiveWidget } from "./mathlive-widget";
-import { MathLiveEditorModePluginSettings } from "./setting";
+import { MathLiveEditorModePluginSettings, Global } from "./setting";
 
 export const mathliveListFieldWrapper = (
-	settings: MathLiveEditorModePluginSettings
+	settings: MathLiveEditorModePluginSettings,
+	global: Global
 ) => {
 	const mathliveListField = StateField.define<DecorationSet>({
 		create(state): DecorationSet {
@@ -53,7 +54,8 @@ export const mathliveListFieldWrapper = (
 										{ from: begin, to: end },
 										transaction.state.sliceDoc(begin, end),
 										settings,
-										isInline
+										isInline,
+										global
 									),
 									block: true,
 									side: 10,
@@ -73,7 +75,8 @@ export const mathliveListFieldWrapper = (
 												end
 											),
 											settings,
-											isInline
+											isInline,
+											global
 										),
 									})
 								);

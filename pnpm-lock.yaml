@@ -8,9 +8,12 @@ importers:
 
   .:
     dependencies:
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
       mathlive:
-        specifier: 0.100.0
-        version: 0.100.0
+        specifier: 0.101.0
+        version: 0.101.0
     devDependencies:
       '@codemirror/language':
         specifier: ^6.10.1
@@ -590,6 +593,11 @@ packages:
   json-stable-stringify-without-jsonify@1.0.1:
     resolution: {integrity: sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==}
 
+  json5@2.2.3:
+    resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
+    engines: {node: '>=6'}
+    hasBin: true
+
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
@@ -604,8 +612,8 @@ packages:
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
 
-  mathlive@0.100.0:
-    resolution: {integrity: sha512-gZJTw/7pzqsfpZBt5yr7lBeMErDvqnbe2U1LOsS9drrtH9oJuT/cH0LxgC/8Hid4M4/DQ0HQcW1TvjIX399MqQ==}
+  mathlive@0.101.0:
+    resolution: {integrity: sha512-/4pXiqttFhThEQ2oxEZjTFyMuVLc0cEe3GjczncaH/bP9ZYhkmlFIWNzyU9zYXzS8YugczAL7trENdCXukXBgA==}
     engines: {node: '>=16.14.2', npm: '>=8.5.0'}
 
   merge2@1.4.1:
@@ -1332,6 +1340,8 @@ snapshots:
 
   json-stable-stringify-without-jsonify@1.0.1: {}
 
+  json5@2.2.3: {}
+
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
@@ -1347,7 +1357,7 @@ snapshots:
 
   lodash.merge@4.6.2: {}
 
-  mathlive@0.100.0:
+  mathlive@0.101.0:
     dependencies:
       '@cortex-js/compute-engine': 0.24.1
 

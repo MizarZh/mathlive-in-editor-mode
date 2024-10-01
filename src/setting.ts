@@ -1,6 +1,12 @@
 import { App, PluginSettingTab, Setting, Notice } from "obsidian";
 import MathLiveInEditorMode from "./main";
 
+export interface Global {
+	previousMacros: string;
+	previousInlineShortcuts: string;
+	previousKeybindings: string;
+}
+
 export interface MathLiveEditorModePluginSettings {
 	display: boolean;
 	blockDisplay: boolean;
@@ -9,6 +15,9 @@ export interface MathLiveEditorModePluginSettings {
 	inlineDisplay: boolean;
 	inlineMenuIcon: boolean;
 	inlineKeyboardIcon: boolean;
+	macros: string;
+	inlineShortcuts: string;
+	keybindings: string;
 }
 
 export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
@@ -19,6 +28,9 @@ export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
 	inlineDisplay: false,
 	inlineMenuIcon: false,
 	inlineKeyboardIcon: false,
+	macros: "",
+	inlineShortcuts: "",
+	keybindings: "",
 };
 
 export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
@@ -40,7 +52,7 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 				cb.onChange(async (ev) => {
 					this.plugin.settings.display = ev;
 					await this.plugin.saveSettings();
-					this.display()
+					this.display();
 					new Notice("Toggle visibility successfully!");
 				});
 			})
@@ -59,7 +71,7 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 			});
 
 		if (this.plugin.settings.display) {
-			new Setting(this.containerEl).setName('Block').setHeading();
+			new Setting(this.containerEl).setName("Block").setHeading();
 
 			new Setting(this.containerEl)
 				.setName("Display block equation")
@@ -97,7 +109,7 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 					});
 				});
 
-				new Setting(this.containerEl).setName('Inline').setHeading();
+			new Setting(this.containerEl).setName("Inline").setHeading();
 
 			new Setting(this.containerEl)
 				.setName("Display inline equation")
@@ -132,6 +144,61 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 						this.plugin.settings.inlineKeyboardIcon = ev;
 						await this.plugin.saveSettings();
 						new Notice("Toggle inline keyboard icon successfully!");
+					});
+				});
+
+			new Setting(this.containerEl).setName("Macros").setHeading();
+
+			new Setting(this.containerEl)
+				.setClass("obsidian-mathlive-codemirror-setting")
+				.setName("MathLive macros")
+				.setDesc(
+					"Using JSON5 format, which supports single quote, trailing comma etc besides basic JSON."
+				)
+				.addTextArea((cb) => {
+					cb.setPlaceholder(
+						"{\ncommand1: 'xxx', \ncommand2: 'xxx',\n}"
+					);
+					cb.setValue(this.plugin.settings.macros);
+					cb.onChange(async (ev) => {
+						this.plugin.settings.macros = ev;
+						await this.plugin.saveSettings();
+					});
+				});
+
+			new Setting(this.containerEl)
+				.setName("Inline shortcuts")
+				.setHeading();
+
+			new Setting(this.containerEl)
+				.setClass("obsidian-mathlive-codemirror-setting")
+				.setName("MathLive inline shortcuts")
+				.setDesc("JSON5 format")
+				.addTextArea((cb) => {
+					cb.setPlaceholder(
+						"{\ncommand1: 'xxx', \ncommand2: 'xxx',\n}"
+					);
+					cb.setValue(this.plugin.settings.inlineShortcuts);
+					cb.onChange(async (ev) => {
+						this.plugin.settings.inlineShortcuts = ev;
+						await this.plugin.saveSettings();
+					});
+				});
+
+			new Setting(this.containerEl).setName("Keybindings").setHeading();
+
+			new Setting(this.containerEl)
+				.setClass("obsidian-mathlive-codemirror-setting")
+				.setName("MathLive keybindings")
+				.setDesc("JSON5 format")
+				.addTextArea((cb) => {
+					cb.setPlaceholder(
+						"{\ncommand1: 'xxx', \ncommand2: 'xxx',\n}"
+					);
+					cb.setValue(this.plugin.settings.keybindings);
+					cb.onChange(async (ev) => {
+						this.plugin.settings.keybindings = ev;
+						await this.plugin.saveSettings();
 					});
 				});
 		}

@@ -2,6 +2,14 @@
 	width: 100%;
 } */
 
+.obsidian-mathlive-codemirror-setting textarea,
+.obsidian-mathlive-codemirror-setting input {
+	min-width: 400px;
+	min-height: 200px;
+	font-family: monospace;
+	resize: vertical;
+}
+
 .theme-dark {
 	--caret-color: #ddd;
 	--contains-highlight-background-color: #767676;

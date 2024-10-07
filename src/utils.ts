@@ -1,11 +1,11 @@
 import { parse as json5parse } from "json5";
 import { Notice } from "obsidian";
-import { Macros } from "./mathlive-widget";
+import { MacroDictionary } from "mathlive";
 
 export function macros2newcommands(macros: string) {
 	try {
 		const newcommandList = [];
-		const macrosJSON = json5parse(macros) as Macros;
+		const macrosJSON = json5parse(macros) as MacroDictionary;
 		for (const macro in macrosJSON) {
 			const macroVal = macrosJSON[macro];
 			if (typeof macroVal === "string") {
@@ -16,7 +16,7 @@ export function macros2newcommands(macros: string) {
 				);
 			}
 		}
-		return newcommandList.join('\n')
+		return newcommandList.join("\n");
 	} catch (e) {
 		new Notice("MathLive: Incorrect macro settings.");
 		console.error(e);

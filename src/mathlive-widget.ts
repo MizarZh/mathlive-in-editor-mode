@@ -1,22 +1,16 @@
 import { EditorView, WidgetType } from "@codemirror/view";
-import { MathfieldElement } from "mathlive";
+import {
+	MathfieldElement,
+	InlineShortcutDefinitions,
+	MacroDictionary,
+	Keybinding,
+} from "mathlive";
 import { MathLiveEditorModePluginSettings, Global } from "./setting";
 import { parse as json5parse } from "json5";
 import { Notice } from "obsidian";
 interface WidgetConfig {
 	from: number;
 	to: number;
-}
-
-export interface Macros {
-	[macro: string]: string | MacroSetting;
-}
-
-export interface MacroSetting {
-	args: number;
-	captureSelection?: boolean;
-	def: string;
-	expand?: boolean;
 }
 
 export class MathLiveWidget extends WidgetType {
@@ -50,7 +44,20 @@ export class MathLiveWidget extends WidgetType {
 		mfe.setValue(this.equation);
 		mfe.dataset.from = `${this.config.from}`;
 		mfe.dataset.to = `${this.config.to}`;
-		this.global.previousMacros = this.settings.macros;
+
+		mfe.dataset.macros = `${this.settings.macros}`;
+		mfe.dataset.shortcuts = `${this.settings.inlineShortcuts}`;
+		mfe.dataset.keybindings = `${this.settings.keybindings}`;
+
+		// have to put them in setTimeout, mfe is somehow not initialized
+		setTimeout(() => {
+			this.global.baseMacros = mfe.macros as MacroDictionary;
+			this.global.baseShortcuts =
+				mfe.inlineShortcuts as InlineShortcutDefinitions;
+			this.global.baseKeybindings = mfe.keybindings as Keybinding[];
+		}, 0);
+
+		// this.global.previousMacros = this.settings.macros;
 		this.style(mfe, div);
 		// mfe -> editor
 		mfe.addEventListener("input", (ev: InputEvent) => {
@@ -81,10 +88,12 @@ export class MathLiveWidget extends WidgetType {
 		)[0] as MathfieldElement;
 
 		try {
-			if (this.global.previousMacros !== this.settings.macros) {
-				const macrosJSON = json5parse(this.settings.macros);
-				this.global.previousMacros = this.settings.macros;
-				mfe.macros = { ...mfe.macros, ...macrosJSON };
+			if (mfe.dataset.macros !== this.settings.macros) {
+				const macrosJSON = json5parse(
+					this.settings.macros
+				) as MacroDictionary;
+				console.log(macrosJSON);
+				mfe.macros = { ...this.global.baseMacros, ...macrosJSON };
 			}
 		} catch (e) {
 			new Notice("MathLive: Incorrect macro settings.");
@@ -92,34 +101,32 @@ export class MathLiveWidget extends WidgetType {
 		}
 
 		try {
-			if (
-				this.global.previousInlineShortcuts !==
-				this.settings.inlineShortcuts
-			) {
-				const inlineShortcutsJSON = json5parse(
+			if (mfe.dataset.shortcuts !== this.settings.inlineShortcuts) {
+				const shortcutsJSON = json5parse(
 					this.settings.inlineShortcuts
-				);
-
-				this.global.previousInlineShortcuts =
-					this.settings.inlineShortcuts;
+				) as InlineShortcutDefinitions;
 				mfe.inlineShortcuts = {
-					...mfe.inlineShortcuts,
-					...inlineShortcutsJSON,
+					...this.global.baseShortcuts,
+					...shortcutsJSON,
 				};
 			}
 		} catch (e) {
-			new Notice("MathLive: Incorrect inline shortcuts settings.");
+			new Notice("MathLive: Incorrect inline shortcut settings.");
 			console.error(e);
 		}
 
 		try {
-			if (this.global.previousKeybindings !== this.settings.keybindings) {
-				const keybindingsJSON = json5parse(this.settings.keybindings);
-				this.global.previousKeybindings = this.settings.keybindings;
-				mfe.keybindings = { ...mfe.keybindings, ...keybindingsJSON };
+			if (mfe.dataset.macros !== this.settings.macros) {
+				const macrosJSON = json5parse(
+					this.settings.macros
+				) as Keybinding[];
+				mfe.keybindings = {
+					...this.global.baseKeybindings,
+					...macrosJSON,
+				};
 			}
 		} catch (e) {
-			new Notice("MathLive: Incorrect keybindings settings.");
+			new Notice("MathLive: Incorrect keybinding settings.");
 			console.error(e);
 		}
 

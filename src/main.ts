@@ -21,9 +21,9 @@ export default class MathLiveInEditorMode extends Plugin {
 		this.addSettingTab(new MathLiveEditorModeSettingsTab(this.app, this));
 
 		this.global = {
-			previousMacros: "",
-			previousInlineShortcuts: "",
-			previousKeybindings: "",
+			baseMacros: {},
+			baseShortcuts: {},
+			baseKeybindings: [],
 		};
 
 		this.registerEditorExtension(

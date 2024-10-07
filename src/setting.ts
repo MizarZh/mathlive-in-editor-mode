@@ -1,11 +1,20 @@
 import { App, PluginSettingTab, Setting, Notice } from "obsidian";
 import MathLiveInEditorMode from "./main";
 import { macros2newcommands } from "./utils";
+import {
+	InlineShortcutDefinitions,
+	MacroDictionary,
+	Keybinding,
+} from "mathlive";
 
 export interface Global {
-	previousMacros: string;
-	previousInlineShortcuts: string;
-	previousKeybindings: string;
+	// previousMacros: string;
+	// previousInlineShortcuts: string;
+	// previousKeybindings: string;
+	baseMacros: MacroDictionary;
+	baseShortcuts: InlineShortcutDefinitions;
+	baseKeybindings: Keybinding[];
+	forceUpdate: boolean;
 }
 
 export interface MathLiveEditorModePluginSettings {
@@ -165,7 +174,7 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 						);
 						if (newcommand !== undefined)
 							navigator.clipboard.writeText(newcommand);
-							new Notice("Copy newcommand successfully!")
+						new Notice("Copy newcommand successfully!");
 					});
 				})
 				.addTextArea((cb) => {

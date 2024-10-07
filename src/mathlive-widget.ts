@@ -7,6 +7,18 @@ interface WidgetConfig {
 	from: number;
 	to: number;
 }
+
+export interface Macros {
+	[macro: string]: string | MacroSetting;
+}
+
+export interface MacroSetting {
+	args: number;
+	captureSelection?: boolean;
+	def: string;
+	expand?: boolean;
+}
+
 export class MathLiveWidget extends WidgetType {
 	equation: string;
 	config: WidgetConfig;
@@ -76,10 +88,9 @@ export class MathLiveWidget extends WidgetType {
 			}
 		} catch (e) {
 			new Notice("MathLive: Incorrect macro settings.");
-			console.log(e);
+			console.error(e);
 		}
 
-		console.log(this.settings.inlineShortcuts);
 		try {
 			if (
 				this.global.previousInlineShortcuts !==
@@ -98,7 +109,7 @@ export class MathLiveWidget extends WidgetType {
 			}
 		} catch (e) {
 			new Notice("MathLive: Incorrect inline shortcuts settings.");
-			console.log(e);
+			console.error(e);
 		}
 
 		try {
@@ -109,7 +120,7 @@ export class MathLiveWidget extends WidgetType {
 			}
 		} catch (e) {
 			new Notice("MathLive: Incorrect keybindings settings.");
-			console.log(e);
+			console.error(e);
 		}
 
 		this.style(mfe, dom as HTMLDivElement);

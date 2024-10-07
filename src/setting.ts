@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting, Notice } from "obsidian";
 import MathLiveInEditorMode from "./main";
+import { macros2newcommands } from "./utils";
 
 export interface Global {
 	previousMacros: string;
@@ -155,6 +156,18 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 				.setDesc(
 					"Using JSON5 format, which supports single quote, trailing comma etc besides basic JSON."
 				)
+				.addButton((cb) => {
+					cb.setIcon("copy");
+					cb.setTooltip("Copy \\newcommand style latex");
+					cb.onClick(async (ev) => {
+						const newcommand = macros2newcommands(
+							this.plugin.settings.macros
+						);
+						if (newcommand !== undefined)
+							navigator.clipboard.writeText(newcommand);
+							new Notice("Copy newcommand successfully!")
+					});
+				})
 				.addTextArea((cb) => {
 					cb.setPlaceholder(
 						"{\ncommand1: 'xxx', \ncommand2: 'xxx',\n}"

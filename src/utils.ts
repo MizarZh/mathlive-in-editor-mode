@@ -9,10 +9,10 @@ export function macros2newcommands(macros: string) {
 		for (const macro in macrosJSON) {
 			const macroVal = macrosJSON[macro];
 			if (typeof macroVal === "string") {
-				newcommandList.push(`\\newcommand{${macro}}{${macroVal}}`);
+				newcommandList.push(`\\newcommand{\\${macro}}{${macroVal}}`);
 			} else if ("args" in macroVal && "def" in macroVal) {
 				newcommandList.push(
-					`\\newcommand{${macro}}[${macroVal.args}]{${macroVal.def}}`
+					`\\newcommand{\\${macro}}[${macroVal.args}]{${macroVal.def}}`
 				);
 			}
 		}

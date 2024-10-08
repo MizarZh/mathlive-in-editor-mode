@@ -215,13 +215,25 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 				.setDesc("JSON5 format")
 				.addTextArea((cb) => {
 					cb.setPlaceholder(
-						"{\ncommand1: 'xxx', \ncommand2: 'xxx',\n}"
+						"[\nkeybinding1: {xxx}, \nkeybinding2: {xxx},\n]"
 					);
 					cb.setValue(this.plugin.settings.keybindings);
 					cb.onChange(async (ev) => {
 						this.plugin.settings.keybindings = ev;
 						await this.plugin.saveSettings();
 					});
+				});
+			new Setting(this.containerEl).setName("Force update").setHeading();
+
+			new Setting(this.containerEl)
+				.setName("Force update MathLive settings")
+				.setDesc(
+					"if settings are not updated, press this button to force update settings."
+				)
+				.addButton((cb) => {
+					cb.setButtonText("Force Update");
+					cb.setTooltip("Force Update MathLive settings");
+					this.plugin.global.forceUpdate = true;
 				});
 		}
 	}

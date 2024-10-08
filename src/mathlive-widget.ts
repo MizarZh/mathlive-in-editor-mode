@@ -45,10 +45,6 @@ export class MathLiveWidget extends WidgetType {
 		mfe.dataset.from = `${this.config.from}`;
 		mfe.dataset.to = `${this.config.to}`;
 
-		mfe.dataset.macros = `${this.settings.macros}`;
-		mfe.dataset.shortcuts = `${this.settings.inlineShortcuts}`;
-		mfe.dataset.keybindings = `${this.settings.keybindings}`;
-
 		// have to put them in setTimeout, mfe is somehow not initialized
 		setTimeout(() => {
 			this.global.baseMacros = mfe.macros as MacroDictionary;
@@ -57,7 +53,6 @@ export class MathLiveWidget extends WidgetType {
 			this.global.baseKeybindings = mfe.keybindings as Keybinding[];
 		}, 0);
 
-		// this.global.previousMacros = this.settings.macros;
 		this.style(mfe, div);
 		// mfe -> editor
 		mfe.addEventListener("input", (ev: InputEvent) => {
@@ -89,11 +84,13 @@ export class MathLiveWidget extends WidgetType {
 
 		try {
 			if (mfe.dataset.macros !== this.settings.macros) {
-				const macrosJSON = json5parse(
-					this.settings.macros
-				) as MacroDictionary;
-				console.log(macrosJSON);
+				let macros = this.settings.macros;
+				if (this.settings.macros.trim() === "") {
+					macros = "{}";
+				}
+				const macrosJSON = json5parse(macros) as MacroDictionary;
 				mfe.macros = { ...this.global.baseMacros, ...macrosJSON };
+				mfe.dataset.macros = this.settings.macros;
 			}
 		} catch (e) {
 			new Notice("MathLive: Incorrect macro settings.");
@@ -102,13 +99,18 @@ export class MathLiveWidget extends WidgetType {
 
 		try {
 			if (mfe.dataset.shortcuts !== this.settings.inlineShortcuts) {
+				let shortcuts = this.settings.inlineShortcuts;
+				if (this.settings.inlineShortcuts.trim() === "") {
+					shortcuts = "{}";
+				}
 				const shortcutsJSON = json5parse(
-					this.settings.inlineShortcuts
+					shortcuts
 				) as InlineShortcutDefinitions;
 				mfe.inlineShortcuts = {
 					...this.global.baseShortcuts,
 					...shortcutsJSON,
 				};
+				mfe.dataset.shortcuts = this.settings.inlineShortcuts;
 			}
 		} catch (e) {
 			new Notice("MathLive: Incorrect inline shortcut settings.");
@@ -116,14 +118,18 @@ export class MathLiveWidget extends WidgetType {
 		}
 
 		try {
-			if (mfe.dataset.macros !== this.settings.macros) {
-				const macrosJSON = json5parse(
-					this.settings.macros
-				) as Keybinding[];
-				mfe.keybindings = {
-					...this.global.baseKeybindings,
-					...macrosJSON,
-				};
+			if (mfe.dataset.keybindings !== this.settings.keybindings) {
+				let keybindings = this.settings.keybindings;
+				if (this.settings.keybindings.trim() === "") {
+					keybindings = "[]";
+				}
+				const keybindingsJSON = json5parse(keybindings) as Keybinding[];
+				if (keybindingsJSON.length !== 0) {
+					mfe.keybindings = {
+						...this.global.baseKeybindings,
+						...keybindingsJSON,
+					};
+				}
 			}
 		} catch (e) {
 			new Notice("MathLive: Incorrect keybinding settings.");
@@ -139,7 +145,14 @@ export class MathLiveWidget extends WidgetType {
 
 		return true;
 	}
-	destroy(dom: HTMLElement): void {}
+	destroy(dom: HTMLElement): void {
+		const mfe = dom.getElementsByTagName(
+			"math-field"
+		)[0] as MathfieldElement;
+
+		mfe.dataset.macros = "";
+		mfe.dataset.shortcuts = "";
+	}
 	style(mfe: MathfieldElement, div: HTMLDivElement) {
 		if (this.settings.display) {
 			// display

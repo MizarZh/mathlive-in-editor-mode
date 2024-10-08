@@ -24,6 +24,7 @@ export default class MathLiveInEditorMode extends Plugin {
 			baseMacros: {},
 			baseShortcuts: {},
 			baseKeybindings: [],
+			forceUpdate: false,
 		};
 
 		this.registerEditorExtension(

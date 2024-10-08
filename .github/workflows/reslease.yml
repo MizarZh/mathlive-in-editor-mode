@@ -6,7 +6,7 @@ on:
       - "*"
 
 env:
-  PLUGIN_NAME: obsidian-mathlive-codemirror # Change this to match the id of your plugin.
+  PLUGIN_NAME: mathlive-in-editor-mode # Change this to match the id of your plugin.
 
 jobs:
   build:

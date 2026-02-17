@@ -37,6 +37,15 @@
 	margin: 0;
 }
 
+/* Hide MathJax when the setting is enabled */
+body.mathlive-hide-mathjax-block .cm-editor div.math mjx-container {
+	display: none !important;
+}
+
+body.mathlive-hide-mathjax-inline .cm-editor span.math mjx-container {
+	display: none !important;
+}
+
 math-field.hide-keyboard::part(virtual-keyboard-toggle) {
 	display: none;
 }

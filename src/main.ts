@@ -43,9 +43,14 @@ export default class MathLiveInEditorMode extends Plugin {
 				// new Notice("Toggle successfully!");
 			},
 		});
+
+		this.updateMathJaxVisibility();
 	}
 
-	onunload() {}
+	onunload() {
+		document.body.removeClass("mathlive-hide-mathjax-block");
+		document.body.removeClass("mathlive-hide-mathjax-inline");
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign(
@@ -57,5 +62,23 @@ export default class MathLiveInEditorMode extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+		// Update MathJax visibility when settings change
+		this.updateMathJaxVisibility();
+	}
+
+	updateMathJaxVisibility() {
+		document.body.removeClass("mathlive-hide-mathjax-block");
+		document.body.removeClass("mathlive-hide-mathjax-inline");
+
+		const { hideMathJaxBlock, hideMathJaxInline } = this.settings;
+
+		if (hideMathJaxBlock && hideMathJaxInline) {
+			document.body.addClass("mathlive-hide-mathjax-block");
+			document.body.addClass("mathlive-hide-mathjax-inline");
+		} else if (hideMathJaxBlock && !hideMathJaxInline) {
+			document.body.addClass("mathlive-hide-mathjax-block");
+		} else if (!hideMathJaxBlock && hideMathJaxInline) {
+			document.body.addClass("mathlive-hide-mathjax-inline");
+		}
 	}
 }

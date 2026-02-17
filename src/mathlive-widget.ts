@@ -53,28 +53,72 @@ export class MathLiveWidget extends WidgetType {
 			this.global.baseKeybindings = mfe.keybindings as Keybinding[];
 		}, 0);
 
-		this.style(mfe, div);
-		// mfe -> editor
+	this.style(mfe, div);
+
+	// Save initial value (for Esc to cancel)
+	const initialValue = this.equation;
+	mfe.dataset.initialValue = initialValue;
+
+	// Helper function to dispatch changes
+	const dispatchChange = (newValue: string) => {
+		if (
+			mfe.dataset.from !== undefined &&
+			mfe.dataset.to !== undefined
+		) {
+			view.dispatch({
+				changes: {
+					from: parseInt(mfe.dataset.from),
+					to: parseInt(mfe.dataset.to),
+					insert: newValue,
+				},
+			});
+			this.equation = newValue;
+			// Update 'to' position (content length may have changed)
+			mfe.dataset.to = String(
+				parseInt(mfe.dataset.from) + newValue.length
+			);
+		}
+	};
+
+	// mfe -> editor
+	if (this.settings.immediateUpdate) {
+		// Immediate update mode: dispatch on every input
 		mfe.addEventListener("input", (ev: InputEvent) => {
 			const target = ev.target as MathfieldElement;
 			if (this.equation !== target.value) {
-				if (
-					mfe.dataset.from !== undefined &&
-					mfe.dataset.to !== undefined
-				) {
-					view.dispatch({
-						changes: {
-							from: parseInt(mfe.dataset.from),
-							to: parseInt(mfe.dataset.to),
-							insert: mfe.value,
-						},
-					});
-					this.equation = mfe.value;
-				}
+				dispatchChange(mfe.value);
 			}
 		});
+	} else {
+		// Blur update mode: only mark changes on input, dispatch on blur
+		mfe.addEventListener("input", (ev: InputEvent) => {
+			mfe.dataset.hasUnsavedChanges = "true";
+		});
 
-		return div;
+		// Dispatch changes on blur
+		mfe.addEventListener("blur", () => {
+			if (mfe.dataset.hasUnsavedChanges === "true") {
+				const newValue = mfe.value;
+				if (newValue !== this.equation) {
+					dispatchChange(newValue);
+				}
+				mfe.dataset.hasUnsavedChanges = "false";
+			}
+		});
+	}
+
+	// Esc to cancel changes
+	mfe.addEventListener("keydown", (ev: KeyboardEvent) => {
+		if (ev.key === "Escape") {
+			mfe.setValue(initialValue);
+			mfe.dataset.hasUnsavedChanges = "false";
+			mfe.blur();
+			ev.preventDefault();
+			ev.stopPropagation();
+		}
+	});
+
+	return div;
 	}
 	updateDOM(dom: HTMLElement, view: EditorView): boolean {
 		// editor -> mfe
@@ -136,14 +180,19 @@ export class MathLiveWidget extends WidgetType {
 			console.error(e);
 		}
 
-		this.style(mfe, dom as HTMLDivElement);
+	this.style(mfe, dom as HTMLDivElement);
 
-		mfe.dataset.from = `${this.config.from}`;
-		mfe.dataset.to = `${this.config.to}`;
+	mfe.dataset.from = `${this.config.from}`;
+	mfe.dataset.to = `${this.config.to}`;
 
+	// Only update value when not focused and value differs (avoid interrupting input)
+	const isFocused = document.activeElement === mfe ||
+		(document.activeElement instanceof Node && mfe.contains(document.activeElement));
+	if (!isFocused && mfe.value !== this.equation) {
 		mfe.setValue(this.equation);
+	}
 
-		return true;
+	return true;
 	}
 	destroy(dom: HTMLElement): void {
 		const mfe = dom.getElementsByTagName(
@@ -197,4 +246,13 @@ export class MathLiveWidget extends WidgetType {
 			elem.addClass(className);
 		}
 	}
+	// eq(other: MathLiveWidget) {
+	// 	// Only compare anchor position (from) and type, not 'to' or 'equation'
+	// 	// This allows CodeMirror to reuse DOM when content changes, avoiding rebuild and focus loss
+	// 	return (
+	// 		other instanceof MathLiveWidget &&
+	// 		other.config.from === this.config.from &&
+	// 		other.isInline === this.isInline
+	// 	);
+	// }
 }

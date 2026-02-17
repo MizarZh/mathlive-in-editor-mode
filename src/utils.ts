@@ -31,3 +31,5 @@ export function macros2newcommands(macros: string): string {
 		return "";
 	}
 }
+
+// export function hideMathJax(editor: EditorView) {

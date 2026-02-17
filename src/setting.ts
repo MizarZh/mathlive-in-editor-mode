@@ -25,6 +25,9 @@ export interface MathLiveEditorModePluginSettings {
 	inlineDisplay: boolean;
 	inlineMenuIcon: boolean;
 	inlineKeyboardIcon: boolean;
+	immediateUpdate: boolean;
+	hideMathJaxBlock: boolean;
+	hideMathJaxInline: boolean;
 	macros: string;
 	inlineShortcuts: string;
 	keybindings: string;
@@ -38,6 +41,9 @@ export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
 	inlineDisplay: false,
 	inlineMenuIcon: false,
 	inlineKeyboardIcon: false,
+	immediateUpdate: false, // false = dispatch on blur, true = dispatch on input
+	hideMathJaxBlock: false,
+	hideMathJaxInline: false,
 	macros: "",
 	inlineShortcuts: "",
 	keybindings: "",
@@ -98,6 +104,22 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 				});
 
 			new Setting(this.containerEl)
+				.setName("Hide original block equation")
+				.setDesc("When enabled, the original obsidian block equation rendering is hidden in editor mode.")
+				.addToggle((cb) => {
+					cb.setValue(this.plugin.settings.hideMathJaxBlock);
+					cb.onChange(async (ev) => {
+						this.plugin.settings.hideMathJaxBlock = ev;
+						await this.plugin.saveSettings();
+						new Notice(
+							ev
+								? "Original block equation hidden - only MathLive widgets will be shown"
+								: "Original block equation visible - both original block equation and MathLive will be shown"
+						);
+					});
+				});
+
+			new Setting(this.containerEl)
 				.setName("Display block menu icon")
 				.addToggle((cb) => {
 					cb.setValue(this.plugin.settings.blockMenuIcon);
@@ -136,6 +158,22 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 				});
 
 			new Setting(this.containerEl)
+				.setName("Hide original inline equation")
+				.setDesc("When enabled, the original obsidian inline equation rendering is hidden in editor mode.")
+				.addToggle((cb) => {
+					cb.setValue(this.plugin.settings.hideMathJaxInline);
+					cb.onChange(async (ev) => {
+						this.plugin.settings.hideMathJaxInline = ev;
+						await this.plugin.saveSettings();
+						new Notice(
+							ev
+								? "Original inline equation hidden - only MathLive widgets will be shown"
+								: "Original inline equation visible - both original inline equation and MathLive will be shown"
+						);
+					});
+				});
+
+			new Setting(this.containerEl)
 				.setName("Display inline menu icon")
 				.addToggle((cb) => {
 					cb.setValue(this.plugin.settings.inlineMenuIcon);
@@ -154,6 +192,20 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 						this.plugin.settings.inlineKeyboardIcon = ev;
 						await this.plugin.saveSettings();
 						new Notice("Toggle inline keyboard icon successfully!");
+					});
+				});
+
+			new Setting(this.containerEl).setName("Misc").setHeading();
+
+			new Setting(this.containerEl)
+				.setName("Immediate update")
+				.setDesc("When enabled, changes are dispatched immediately on input. When disabled, changes are only dispatched on blur (recommended for better stability).")
+				.addToggle((cb) => {
+					cb.setValue(this.plugin.settings.immediateUpdate);
+					cb.onChange(async (ev) => {
+						this.plugin.settings.immediateUpdate = ev;
+						await this.plugin.saveSettings();
+						new Notice("Update mode changed successfully!");
 					});
 				});
 

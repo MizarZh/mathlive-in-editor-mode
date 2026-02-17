@@ -67,7 +67,7 @@ export const mathliveListFieldWrapper = (
 								builder.add(
 									end + 1,
 									end + 1,
-									Decoration.replace({
+									Decoration.widget({
 										widget: new MathLiveWidget(
 											{ from: begin, to: end },
 											transaction.state.sliceDoc(

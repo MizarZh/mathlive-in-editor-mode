@@ -20,3 +20,8 @@ It is also possible to assign a hotkey to toggle the display of mathlive block.
 When the `MathLive macros` setting is set, the new command is available in MathLive widgets but not in builtin mathjax block due to some designs of mathjax.
 
 If you want the new command to also show up in builtin mathjax block, you can use the copy button in `MathLive macros` to copy latex `\newcommand` command, then paste it in mathjax block in every page or use a plugin to preload those new commands.
+
+
+## Bugfix TODO
+- [ ] Input issue in tablet/phone
+- [ ] Cursor jumps to the end when inputing in inline math field.

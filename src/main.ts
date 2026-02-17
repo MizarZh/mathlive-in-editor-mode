@@ -36,10 +36,16 @@ export default class MathLiveInEditorMode extends Plugin {
 			name: "Toggle MathLive block",
 			editorCallback: async (editor, view) => {
 				this.settings.display = !this.settings.display;
+				console.log("toggle mathlive block display");
 				await this.saveSettings();
 				// update editor state
 				const curser = editor.getCursor();
 				editor.setCursor(curser);
+				if (this.settings.display) {
+					this.updateMathJaxVisibility();
+				} else {
+					this.updateMathJaxVisibility(true);
+				}
 				// new Notice("Toggle successfully!");
 			},
 		});
@@ -66,9 +72,13 @@ export default class MathLiveInEditorMode extends Plugin {
 		this.updateMathJaxVisibility();
 	}
 
-	updateMathJaxVisibility() {
+	updateMathJaxVisibility(onlyRemove: boolean = false) {
 		document.body.removeClass("mathlive-hide-mathjax-block");
 		document.body.removeClass("mathlive-hide-mathjax-inline");
+
+		if (onlyRemove) {
+			return;
+		}
 
 		const { hideMathJaxBlock, hideMathJaxInline } = this.settings;
 

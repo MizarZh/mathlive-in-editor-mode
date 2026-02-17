@@ -161,7 +161,7 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 
 			new Setting(this.containerEl)
 				.setClass("obsidian-mathlive-codemirror-setting")
-				.setName("MathLive macros")
+				.setName("MathLive macros (Not finished yet)")
 				.setDesc(
 					"Using JSON5 format, which supports single quote, trailing comma etc besides basic JSON."
 				)

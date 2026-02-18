@@ -21,6 +21,8 @@
 
 .obsidian-mathlive-codemirror-wrapper.inline {
 	display: inline;
+	/* float: right; */
+	/* transform: translateX(100%); */
 }
 
 .obsidian-mathlive-codemirror-wrapper.inline math-field {

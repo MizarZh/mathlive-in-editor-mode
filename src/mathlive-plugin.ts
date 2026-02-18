@@ -65,8 +65,10 @@ export const mathliveListFieldWrapper = (
 							if (settings.inlineDisplay)
 								// inline
 								builder.add(
-									end + 1,
-									end + 1,
+									// end + 1,
+									// end + 1,
+									begin - 1,
+									begin - 1,
 									Decoration.widget({
 										widget: new MathLiveWidget(
 											{ from: begin, to: end },
@@ -78,6 +80,7 @@ export const mathliveListFieldWrapper = (
 											isInline,
 											global
 										),
+										side: 1,
 									})
 								);
 						}

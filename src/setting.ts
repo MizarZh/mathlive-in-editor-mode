@@ -195,19 +195,6 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 					});
 				});
 
-			new Setting(this.containerEl).setName("Misc").setHeading();
-
-			new Setting(this.containerEl)
-				.setName("Immediate update")
-				.setDesc("When enabled, changes are dispatched immediately on input. When disabled, changes are only dispatched on blur (recommended for better stability).")
-				.addToggle((cb) => {
-					cb.setValue(this.plugin.settings.immediateUpdate);
-					cb.onChange(async (ev) => {
-						this.plugin.settings.immediateUpdate = ev;
-						await this.plugin.saveSettings();
-						new Notice("Update mode changed successfully!");
-					});
-				});
 
 			new Setting(this.containerEl).setName("Macros").setHeading();
 
@@ -273,6 +260,20 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 					cb.onChange(async (ev) => {
 						this.plugin.settings.keybindings = ev;
 						await this.plugin.saveSettings();
+					});
+				});
+
+			new Setting(this.containerEl).setName("Advanced Settings").setHeading();
+
+			new Setting(this.containerEl)
+				.setName("Immediate update")
+				.setDesc("When enabled, changes are dispatched immediately on input. When disabled, changes are only dispatched on blur.")
+				.addToggle((cb) => {
+					cb.setValue(this.plugin.settings.immediateUpdate);
+					cb.onChange(async (ev) => {
+						this.plugin.settings.immediateUpdate = ev;
+						await this.plugin.saveSettings();
+						new Notice("Update mode changed successfully!");
 					});
 				});
 			// new Setting(this.containerEl).setName("Force update").setHeading();

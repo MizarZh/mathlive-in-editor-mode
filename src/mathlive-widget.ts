@@ -43,6 +43,7 @@ export class MathLiveWidget extends WidgetType {
 		const mfe = document.createElement("math-field") as MathfieldElement;
 		div.appendChild(mfe);
 		div.addClass("obsidian-mathlive-codemirror-wrapper");
+		mfe.defaultMode = this.isInline ? "inline-math" : "math";
 		mfe.addClass("obsidian-mathlive-codemirror-math-field");
 		mfe.setValue(this.equation);
 		mfe.dataset.from = `${this.config.from}`;
@@ -279,7 +280,7 @@ export class MathLiveWidget extends WidgetType {
 
 	setupKeyboardCloseButton(mfe: MathfieldElement) {
 		const manager = KeyboardCloseButtonManager.getInstance();
-		
+
 		const handleInteraction = () => {
 			manager.ensureButton();
 		};
@@ -316,7 +317,7 @@ class KeyboardCloseButtonManager {
 		return this.instance;
 	}
 
-	private constructor() {}
+	private constructor() { }
 
 	private getToolbar(): HTMLElement | null {
 		return document.querySelector(this.TOOLBAR_SELECTOR);
@@ -393,7 +394,7 @@ class KeyboardCloseButtonManager {
 		this.pendingTimeout = window.setTimeout(() => {
 			this.pendingTimeout = null;
 			this.injectButton();
-			
+
 			// Start observing only when keyboard is visible
 			if (!this.isObserving) {
 				this.startObserving();

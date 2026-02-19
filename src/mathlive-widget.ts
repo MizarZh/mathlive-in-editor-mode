@@ -4,7 +4,7 @@ import {
 	InlineShortcutDefinitions,
 	MacroDictionary,
 	Keybinding,
-	VirtualKeyboardPolicy
+	VirtualKeyboardPolicy,
 } from "mathlive";
 import { MathLiveEditorModePluginSettings, Global } from "./setting";
 import { parse as json5parse } from "json5";
@@ -13,6 +13,8 @@ interface WidgetConfig {
 	from: number;
 	to: number;
 }
+
+const processedKeyboards = new WeakSet<HTMLElement>();
 
 export class MathLiveWidget extends WidgetType {
 	equation: string;
@@ -60,74 +62,77 @@ export class MathLiveWidget extends WidgetType {
 				this.global.baseKeybindings = mfe.keybindings as Keybinding[];
 			}
 			mfe.mathVirtualKeyboardPolicy = this.settings.mathVirtualKeyboardMode as VirtualKeyboardPolicy;
+
+			// Setup keyboard close button injection
+			this.setupKeyboardCloseButton(mfe);
 		}, 0);
 
-	this.style(mfe, div);
+		this.style(mfe, div);
 
-	// Save initial value (for Esc to cancel)
-	const initialValue = this.equation;
-	mfe.dataset.initialValue = initialValue;
+		// Save initial value (for Esc to cancel)
+		const initialValue = this.equation;
+		mfe.dataset.initialValue = initialValue;
 
-	// Helper function to dispatch changes
-	const dispatchChange = (newValue: string) => {
-		if (
-			mfe.dataset.from !== undefined &&
-			mfe.dataset.to !== undefined
-		) {
-			view.dispatch({
-				changes: {
-					from: parseInt(mfe.dataset.from),
-					to: parseInt(mfe.dataset.to),
-					insert: newValue,
-				},
-			});
-			this.equation = newValue;
-			// Update 'to' position (content length may have changed)
-			mfe.dataset.to = String(
-				parseInt(mfe.dataset.from) + newValue.length
-			);
-		}
-	};
-
-	// mfe -> editor
-	if (this.settings.immediateUpdate) {
-		// Immediate update mode: dispatch on every input
-		mfe.addEventListener("input", (ev: InputEvent) => {
-			const target = ev.target as MathfieldElement;
-			if (this.equation !== target.value) {
-				dispatchChange(mfe.value);
+		// Helper function to dispatch changes
+		const dispatchChange = (newValue: string) => {
+			if (
+				mfe.dataset.from !== undefined &&
+				mfe.dataset.to !== undefined
+			) {
+				view.dispatch({
+					changes: {
+						from: parseInt(mfe.dataset.from),
+						to: parseInt(mfe.dataset.to),
+						insert: newValue,
+					},
+				});
+				this.equation = newValue;
+				// Update 'to' position (content length may have changed)
+				mfe.dataset.to = String(
+					parseInt(mfe.dataset.from) + newValue.length
+				);
 			}
-		});
-	} else {
-		// Blur update mode: only mark changes on input, dispatch on blur
-		mfe.addEventListener("input", (ev: InputEvent) => {
-			mfe.dataset.hasUnsavedChanges = "true";
-		});
+		};
 
-		// Dispatch changes on blur
-		mfe.addEventListener("blur", () => {
-			if (mfe.dataset.hasUnsavedChanges === "true") {
-				const newValue = mfe.value;
-				if (newValue !== this.equation) {
-					dispatchChange(newValue);
+		// mfe -> editor
+		if (this.settings.immediateUpdate) {
+			// Immediate update mode: dispatch on every input
+			mfe.addEventListener("input", (ev: InputEvent) => {
+				const target = ev.target as MathfieldElement;
+				if (this.equation !== target.value) {
+					dispatchChange(mfe.value);
 				}
+			});
+		} else {
+			// Blur update mode: only mark changes on input, dispatch on blur
+			mfe.addEventListener("input", (ev: InputEvent) => {
+				mfe.dataset.hasUnsavedChanges = "true";
+			});
+
+			// Dispatch changes on blur
+			mfe.addEventListener("blur", () => {
+				if (mfe.dataset.hasUnsavedChanges === "true") {
+					const newValue = mfe.value;
+					if (newValue !== this.equation) {
+						dispatchChange(newValue);
+					}
+					mfe.dataset.hasUnsavedChanges = "false";
+				}
+			});
+		}
+
+		// Esc to cancel changes
+		mfe.addEventListener("keydown", (ev: KeyboardEvent) => {
+			if (ev.key === "Escape") {
+				mfe.setValue(initialValue);
 				mfe.dataset.hasUnsavedChanges = "false";
+				mfe.blur();
+				ev.preventDefault();
+				ev.stopPropagation();
 			}
 		});
-	}
 
-	// Esc to cancel changes
-	mfe.addEventListener("keydown", (ev: KeyboardEvent) => {
-		if (ev.key === "Escape") {
-			mfe.setValue(initialValue);
-			mfe.dataset.hasUnsavedChanges = "false";
-			mfe.blur();
-			ev.preventDefault();
-			ev.stopPropagation();
-		}
-	});
-
-	return div;
+		return div;
 	}
 	updateDOM(dom: HTMLElement, view: EditorView): boolean {
 		// editor -> mfe
@@ -204,19 +209,19 @@ export class MathLiveWidget extends WidgetType {
 
 		mfe.mathVirtualKeyboardPolicy = this.settings.mathVirtualKeyboardMode as VirtualKeyboardPolicy;
 
-	this.style(mfe, dom as HTMLDivElement);
+		this.style(mfe, dom as HTMLDivElement);
 
-	mfe.dataset.from = `${this.config.from}`;
-	mfe.dataset.to = `${this.config.to}`;
+		mfe.dataset.from = `${this.config.from}`;
+		mfe.dataset.to = `${this.config.to}`;
 
-	// Only update value when not focused and value differs (avoid interrupting input)
-	const isFocused = document.activeElement === mfe ||
-		(document.activeElement instanceof Node && mfe.contains(document.activeElement));
-	if (!isFocused && mfe.value !== this.equation) {
-		mfe.setValue(this.equation);
-	}
+		// Only update value when not focused and value differs (avoid interrupting input)
+		const isFocused = document.activeElement === mfe ||
+			(document.activeElement instanceof Node && mfe.contains(document.activeElement));
+		if (!isFocused && mfe.value !== this.equation) {
+			mfe.setValue(this.equation);
+		}
 
-	return true;
+		return true;
 	}
 	destroy(dom: HTMLElement): void {
 		const mfe = dom.getElementsByTagName(
@@ -263,12 +268,24 @@ export class MathLiveWidget extends WidgetType {
 			div.addClass("hidden");
 		}
 	}
+
 	changeCSSClass(c: boolean, elem: HTMLElement, className: string) {
 		if (c) {
 			elem.removeClass(className);
 		} else {
 			elem.addClass(className);
 		}
+	}
+
+	setupKeyboardCloseButton(mfe: MathfieldElement) {
+		const manager = KeyboardCloseButtonManager.getInstance();
+		
+		const handleInteraction = () => {
+			manager.ensureButton();
+		};
+
+		mfe.addEventListener('focus', handleInteraction);
+		mfe.addEventListener('click', handleInteraction);
 	}
 	// eq(other: MathLiveWidget) {
 	// 	// Only compare anchor position (from) and type, not 'to' or 'equation'
@@ -279,4 +296,108 @@ export class MathLiveWidget extends WidgetType {
 	// 		other.isInline === this.isInline
 	// 	);
 	// }
+}
+
+// Global keyboard close button manager
+class KeyboardCloseButtonManager {
+	private observer: MutationObserver | null = null;
+	private pendingTimeout: number | null = null;
+	private isObserving = false;
+	private readonly CLOSE_BUTTON_CLASS = 'obsidian-mathlive-keyboard-close';
+	private readonly TOOLBAR_SELECTOR = '.ML__edit-toolbar';
+	private readonly KEYBOARD_CONTAINER_SELECTOR = '.ML__keyboard';
+
+	private static instance: KeyboardCloseButtonManager | null = null;
+
+	static getInstance(): KeyboardCloseButtonManager {
+		if (!this.instance) {
+			this.instance = new KeyboardCloseButtonManager();
+		}
+		return this.instance;
+	}
+
+	private constructor() {}
+
+	private getToolbar(): HTMLElement | null {
+		return document.querySelector(this.TOOLBAR_SELECTOR);
+	}
+
+	private isKeyboardVisible(): boolean {
+		const keyboard = document.querySelector(this.KEYBOARD_CONTAINER_SELECTOR);
+		return keyboard !== null && (keyboard as HTMLElement).offsetParent !== null;
+	}
+
+	private hasCloseButton(toolbar: HTMLElement): boolean {
+		return !!toolbar.querySelector(`.${this.CLOSE_BUTTON_CLASS}`);
+	}
+
+	private createCloseButton(): HTMLElement {
+		const button = document.createElement('div');
+		button.className = `action ${this.CLOSE_BUTTON_CLASS}`;
+		button.innerHTML = '✕';
+		button.setAttribute('aria-label', 'Close Keyboard');
+		button.dataset.tooltip = "Close Keyboard";
+		button.addEventListener('click', () => {
+			window.mathVirtualKeyboard?.hide();
+		});
+		return button;
+	}
+
+	private injectButton(): void {
+		const toolbar = this.getToolbar();
+		if (!toolbar || this.hasCloseButton(toolbar)) {
+			return;
+		}
+		toolbar.appendChild(this.createCloseButton());
+	}
+
+	private startObserving(): void {
+		if (this.isObserving) return;
+
+		this.observer = new MutationObserver(() => {
+			if (!this.isKeyboardVisible()) {
+				this.stopObserving();
+				return;
+			}
+			this.injectButton();
+		});
+
+		this.observer.observe(document.body, {
+			childList: true,
+			subtree: true,
+		});
+
+		this.isObserving = true;
+	}
+
+	private stopObserving(): void {
+		if (this.observer) {
+			this.observer.disconnect();
+			this.isObserving = false;
+		}
+	}
+
+	public ensureButton(): void {
+		// Cancel any pending timeout to avoid accumulation
+		if (this.pendingTimeout !== null) {
+			clearTimeout(this.pendingTimeout);
+			this.pendingTimeout = null;
+		}
+
+		// Only proceed if keyboard is actually visible
+		if (!this.isKeyboardVisible()) {
+			return;
+		}
+
+		// Schedule button injection
+		this.pendingTimeout = window.setTimeout(() => {
+			this.pendingTimeout = null;
+			this.injectButton();
+			
+			// Start observing only when keyboard is visible
+			if (!this.isObserving) {
+				this.startObserving();
+			}
+		}, 300);
+	}
 }

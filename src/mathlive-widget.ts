@@ -47,10 +47,17 @@ export class MathLiveWidget extends WidgetType {
 
 		// have to put them in setTimeout, mfe is somehow not initialized
 		setTimeout(() => {
-			this.global.baseMacros = mfe.macros as MacroDictionary;
-			this.global.baseShortcuts =
-				mfe.inlineShortcuts as InlineShortcutDefinitions;
-			this.global.baseKeybindings = mfe.keybindings as Keybinding[];
+			// Save base defaults if not already saved
+			if (Object.keys(this.global.baseMacros).length === 0) {
+				this.global.baseMacros = mfe.macros as MacroDictionary;
+			}
+			if (Object.keys(this.global.baseShortcuts).length === 0) {
+				this.global.baseShortcuts =
+					mfe.inlineShortcuts as InlineShortcutDefinitions;
+			}
+			if (this.global.baseKeybindings.length === 0) {
+				this.global.baseKeybindings = mfe.keybindings as Keybinding[];
+			}
 		}, 0);
 
 	this.style(mfe, div);
@@ -128,6 +135,10 @@ export class MathLiveWidget extends WidgetType {
 
 		try {
 			if (mfe.dataset.macros !== this.settings.macros) {
+				// If baseMacros is not initialized yet, get it from mfe first
+				if (Object.keys(this.global.baseMacros).length === 0) {
+					this.global.baseMacros = mfe.macros as MacroDictionary;
+				}
 				let macros = this.settings.macros;
 				if (this.settings.macros.trim() === "") {
 					macros = "{}";
@@ -143,6 +154,11 @@ export class MathLiveWidget extends WidgetType {
 
 		try {
 			if (mfe.dataset.shortcuts !== this.settings.inlineShortcuts) {
+				// If baseShortcuts is not initialized yet, get it from mfe first
+				if (Object.keys(this.global.baseShortcuts).length === 0) {
+					this.global.baseShortcuts =
+						mfe.inlineShortcuts as InlineShortcutDefinitions;
+				}
 				let shortcuts = this.settings.inlineShortcuts;
 				if (this.settings.inlineShortcuts.trim() === "") {
 					shortcuts = "{}";
@@ -163,6 +179,10 @@ export class MathLiveWidget extends WidgetType {
 
 		try {
 			if (mfe.dataset.keybindings !== this.settings.keybindings) {
+				// If baseKeybindings is not initialized yet, get it from mfe first
+				if (this.global.baseKeybindings.length === 0) {
+					this.global.baseKeybindings = mfe.keybindings as Keybinding[];
+				}
 				let keybindings = this.settings.keybindings;
 				if (this.settings.keybindings.trim() === "") {
 					keybindings = "[]";

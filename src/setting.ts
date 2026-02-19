@@ -41,7 +41,7 @@ export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
 	inlineDisplay: false,
 	inlineMenuIcon: false,
 	inlineKeyboardIcon: false,
-	immediateUpdate: false, // false = dispatch on blur, true = dispatch on input
+	immediateUpdate: true,
 	hideMathJaxBlock: false,
 	hideMathJaxInline: false,
 	macros: "",

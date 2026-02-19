@@ -4,6 +4,7 @@ import {
 	InlineShortcutDefinitions,
 	MacroDictionary,
 	Keybinding,
+	VirtualKeyboardPolicy
 } from "mathlive";
 import { MathLiveEditorModePluginSettings, Global } from "./setting";
 import { parse as json5parse } from "json5";
@@ -58,6 +59,7 @@ export class MathLiveWidget extends WidgetType {
 			if (this.global.baseKeybindings.length === 0) {
 				this.global.baseKeybindings = mfe.keybindings as Keybinding[];
 			}
+			mfe.mathVirtualKeyboardPolicy = this.settings.mathVirtualKeyboardMode as VirtualKeyboardPolicy;
 		}, 0);
 
 	this.style(mfe, div);
@@ -199,6 +201,8 @@ export class MathLiveWidget extends WidgetType {
 			new Notice("MathLive: Incorrect keybinding settings.");
 			console.error(e);
 		}
+
+		mfe.mathVirtualKeyboardPolicy = this.settings.mathVirtualKeyboardMode as VirtualKeyboardPolicy;
 
 	this.style(mfe, dom as HTMLDivElement);
 

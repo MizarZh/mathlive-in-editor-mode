@@ -32,4 +32,3 @@ export function macros2newcommands(macros: string): string {
 	}
 }
 
-// export function hideMathJax(editor: EditorView) {

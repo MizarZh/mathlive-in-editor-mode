@@ -5,6 +5,7 @@ import {
 	InlineShortcutDefinitions,
 	MacroDictionary,
 	Keybinding,
+	VirtualKeyboardPolicy,
 } from "mathlive";
 
 export interface Global {
@@ -26,6 +27,7 @@ export interface MathLiveEditorModePluginSettings {
 	inlineMenuIcon: boolean;
 	inlineKeyboardIcon: boolean;
 	immediateUpdate: boolean;
+	mathVirtualKeyboardMode: VirtualKeyboardPolicy;
 	hideMathJaxBlock: boolean;
 	hideMathJaxInline: boolean;
 	macros: string;
@@ -42,6 +44,7 @@ export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
 	inlineMenuIcon: false,
 	inlineKeyboardIcon: false,
 	immediateUpdate: true,
+	mathVirtualKeyboardMode: "auto", // auto, manual, sandboxed
 	hideMathJaxBlock: false,
 	hideMathJaxInline: false,
 	macros: "",
@@ -276,6 +279,26 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 						new Notice("Update mode changed successfully!");
 					});
 				});
+
+			new Setting(this.containerEl)
+				.setName("MathLive virtual keyboard mode")
+				.setDesc(multilineDesc([
+					"auto: on touch-enabled devices, show the virtual keyboard panel when the mathfield is focused.",
+					"manual: only show virtual keyboard by clicking keyboard icon.",
+					"sandboxed: the virtual keyboard is displayed in the current browsing context (iframe) if it has a defined container or is the top-level browsing context.",
+				]))
+				.addDropdown((cb) => {
+					cb.addOptions({
+						"auto": "auto",
+						"manual": "manual",
+						"sandboxed": "sandboxed",
+					});
+					cb.setValue(this.plugin.settings.mathVirtualKeyboardMode);
+					cb.onChange(async (ev) => {
+						this.plugin.settings.mathVirtualKeyboardMode = ev as VirtualKeyboardPolicy;
+						await this.plugin.saveSettings();
+					});
+				});
 			// new Setting(this.containerEl).setName("Force update").setHeading();
 
 			// new Setting(this.containerEl)
@@ -290,4 +313,14 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 			// 	});
 		}
 	}
+}
+
+function multilineDesc(descs: string[]) {
+	const descFragment = document.createDocumentFragment()
+	for (const desc of descs) {
+		console.log(desc)
+		descFragment.createEl('p').appendText(desc)
+	}
+	// const descEl = descFragment.createEl('b', 'u-pop');
+	return descFragment
 }

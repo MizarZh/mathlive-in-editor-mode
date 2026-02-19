@@ -6,7 +6,7 @@
 - [x] Basic input function
 - [x] Toggle mathlive display (global, block or inline)
 - [x] Macro (sort of), shortcuts and keybindings support
-- [ ] Switch between mathlive and builtin mathjax
+- [x] Switch between mathlive and builtin mathjax
 - [ ] Different display modes
 
 ## Usage
@@ -24,4 +24,4 @@ If you want the new command to also show up in builtin mathjax block, you can us
 
 ## Bugfix TODO
 - [ ] Input issue in tablet/phone
-- [ ] Cursor jumps to the end when inputing in inline math field.
+- [x] Cursor jumps to the end when inputing in inline math field. (Temporary solution: move inline math field to the left.)

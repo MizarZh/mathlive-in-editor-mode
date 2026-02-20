@@ -2,7 +2,7 @@
 
 [MathLive](https://github.com/arnog/mathlive) input in obsidian editor mode.
 
-## Feature
+## Features
 - [x] Basic input function
 - [x] Toggle mathlive display (global, block or inline)
 - [x] Macro (sort of), shortcuts and keybindings support
@@ -24,4 +24,4 @@ If you want the new command to also show up in builtin mathjax block, you can us
 
 ## Bugfix TODO
 - [ ] Input issue in tablet/phone
-- [x] Cursor jumps to the end when inputing in inline math field. (Temporary solution: move inline math field to the left.)
+- [x] Cursor blurs when inputing in inline math field. (Temporary solution: move inline math field to the left.)

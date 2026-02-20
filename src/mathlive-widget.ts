@@ -65,7 +65,7 @@ export class MathLiveWidget extends WidgetType {
 			mfe.mathVirtualKeyboardPolicy = this.settings.mathVirtualKeyboardMode as VirtualKeyboardPolicy;
 
 			// Setup keyboard close button injection
-			this.setupKeyboardCloseButton(mfe);
+			this.setupKeyboardCollapseButton(mfe);
 		}, 0);
 
 		this.style(mfe, div);
@@ -278,8 +278,8 @@ export class MathLiveWidget extends WidgetType {
 		}
 	}
 
-	setupKeyboardCloseButton(mfe: MathfieldElement) {
-		const manager = KeyboardCloseButtonManager.getInstance();
+	setupKeyboardCollapseButton(mfe: MathfieldElement) {
+		const manager = KeyboardCollapseButtonManager.getInstance();
 
 		const handleInteraction = () => {
 			manager.ensureButton();
@@ -300,19 +300,19 @@ export class MathLiveWidget extends WidgetType {
 }
 
 // Global keyboard close button manager
-class KeyboardCloseButtonManager {
+class KeyboardCollapseButtonManager {
 	private observer: MutationObserver | null = null;
 	private pendingTimeout: number | null = null;
 	private isObserving = false;
-	private readonly CLOSE_BUTTON_CLASS = 'obsidian-mathlive-keyboard-close';
+	private readonly COLLAPSE_BUTTON_CLASS = 'obsidian-mathlive-keyboard-collapse';
 	private readonly TOOLBAR_SELECTOR = '.ML__edit-toolbar';
 	private readonly KEYBOARD_CONTAINER_SELECTOR = '.ML__keyboard';
 
-	private static instance: KeyboardCloseButtonManager | null = null;
+	private static instance: KeyboardCollapseButtonManager | null = null;
 
-	static getInstance(): KeyboardCloseButtonManager {
+	static getInstance(): KeyboardCollapseButtonManager {
 		if (!this.instance) {
-			this.instance = new KeyboardCloseButtonManager();
+			this.instance = new KeyboardCollapseButtonManager();
 		}
 		return this.instance;
 	}
@@ -328,16 +328,16 @@ class KeyboardCloseButtonManager {
 		return keyboard !== null && (keyboard as HTMLElement).offsetParent !== null;
 	}
 
-	private hasCloseButton(toolbar: HTMLElement): boolean {
-		return !!toolbar.querySelector(`.${this.CLOSE_BUTTON_CLASS}`);
+	private hasCollapseButton(toolbar: HTMLElement): boolean {
+		return !!toolbar.querySelector(`.${this.COLLAPSE_BUTTON_CLASS}`);
 	}
 
-	private createCloseButton(): HTMLElement {
+	private createCollapseButton(): HTMLElement {
 		const button = document.createElement('div');
-		button.className = `action ${this.CLOSE_BUTTON_CLASS}`;
+		button.className = `action ${this.COLLAPSE_BUTTON_CLASS}`;
 		button.innerHTML = '✕';
-		button.setAttribute('aria-label', 'Close Keyboard');
-		button.dataset.tooltip = "Close Keyboard";
+		button.setAttribute('aria-label', 'Collapse Keyboard');
+		button.dataset.tooltip = "Collapse Keyboard";
 		button.addEventListener('click', () => {
 			window.mathVirtualKeyboard?.hide();
 		});
@@ -346,10 +346,10 @@ class KeyboardCloseButtonManager {
 
 	private injectButton(): void {
 		const toolbar = this.getToolbar();
-		if (!toolbar || this.hasCloseButton(toolbar)) {
+		if (!toolbar || this.hasCollapseButton(toolbar)) {
 			return;
 		}
-		toolbar.appendChild(this.createCloseButton());
+		toolbar.appendChild(this.createCollapseButton());
 	}
 
 	private startObserving(): void {

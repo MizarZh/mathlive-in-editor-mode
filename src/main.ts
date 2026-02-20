@@ -15,7 +15,8 @@ export default class MathLiveInEditorMode extends Plugin {
 	async onload() {
 		// mobile mode testing
 		// @ts-ignore
-		// this.app.emulateMobile(!this.app.isMobile);
+		// this.app.emulateMobile(true);
+		// this.app.emulateMobile(false);
 
 		await this.loadSettings();
 

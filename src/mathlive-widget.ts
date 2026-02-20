@@ -319,8 +319,8 @@ class KeyboardCollapseButtonManager {
 
 	private constructor() { }
 
-	private getToolbar(): HTMLElement | null {
-		return document.querySelector(this.TOOLBAR_SELECTOR);
+	private getToolbars(): HTMLElement[] {
+		return Array.from(document.querySelectorAll(this.TOOLBAR_SELECTOR));
 	}
 
 	private isKeyboardVisible(): boolean {
@@ -345,11 +345,12 @@ class KeyboardCollapseButtonManager {
 	}
 
 	private injectButton(): void {
-		const toolbar = this.getToolbar();
-		if (!toolbar || this.hasCollapseButton(toolbar)) {
-			return;
+		const toolbars = this.getToolbars();
+		for (const toolbar of toolbars) {
+			if (!this.hasCollapseButton(toolbar)) {
+				toolbar.appendChild(this.createCollapseButton());
+			}
 		}
-		toolbar.appendChild(this.createCollapseButton());
 	}
 
 	private startObserving(): void {

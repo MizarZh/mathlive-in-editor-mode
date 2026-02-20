@@ -318,7 +318,6 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 function multilineDesc(descs: string[]) {
 	const descFragment = document.createDocumentFragment()
 	for (const desc of descs) {
-		console.log(desc)
 		descFragment.createEl('p').appendText(desc)
 	}
 	// const descEl = descFragment.createEl('b', 'u-pop');

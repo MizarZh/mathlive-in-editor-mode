@@ -40,7 +40,7 @@ export default class MathLiveInEditorMode extends Plugin {
 			name: "Toggle MathLive block",
 			editorCallback: async (editor, view) => {
 				this.settings.display = !this.settings.display;
-				console.log("toggle mathlive block display");
+				// console.log("toggle mathlive block display");
 				await this.saveSettings();
 				// update editor state
 				const curser = editor.getCursor();

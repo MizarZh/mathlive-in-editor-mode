@@ -144,6 +144,7 @@ export class MathLiveWidget extends WidgetType {
 		};
 		div.addEventListener("keydown", (ev: KeyboardEvent) => {
 			if (document.activeElement !== mfe && !mfe.contains(document.activeElement)) return;
+			if (!this.settings.arrowKeyNavigation) return;
 			// Use current range from dataset (updated by dispatchChange when LaTeX changes)
 			const from = parseInt(mfe.dataset.from ?? String(this.config.from), 10);
 			const to = parseInt(mfe.dataset.to ?? String(this.config.to), 10);

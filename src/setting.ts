@@ -21,35 +21,37 @@ export interface Global {
 export interface MathLiveEditorModePluginSettings {
 	display: boolean;
 	blockDisplay: boolean;
+	hideMathJaxBlock: boolean;
 	blockMenuIcon: boolean;
 	blockKeyboardIcon: boolean;
 	inlineDisplay: boolean;
+	hideMathJaxInline: boolean;
 	inlineMenuIcon: boolean;
 	inlineKeyboardIcon: boolean;
-	immediateUpdate: boolean;
-	mathVirtualKeyboardMode: VirtualKeyboardPolicy;
-	hideMathJaxBlock: boolean;
-	hideMathJaxInline: boolean;
 	macros: string;
 	inlineShortcuts: string;
 	keybindings: string;
+	immediateUpdate: boolean;
+	mathVirtualKeyboardMode: VirtualKeyboardPolicy;
+	arrowKeyNavigation: boolean;
 }
 
 export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
 	display: true,
 	blockDisplay: true,
+	hideMathJaxBlock: false,
 	blockMenuIcon: true,
 	blockKeyboardIcon: true,
 	inlineDisplay: false,
+	hideMathJaxInline: false,
 	inlineMenuIcon: false,
 	inlineKeyboardIcon: false,
-	immediateUpdate: true,
-	mathVirtualKeyboardMode: "auto", // auto, manual, sandboxed
-	hideMathJaxBlock: false,
-	hideMathJaxInline: false,
 	macros: "",
 	inlineShortcuts: "",
 	keybindings: "",
+	immediateUpdate: true,
+	mathVirtualKeyboardMode: "auto", // auto, manual, sandboxed
+	arrowKeyNavigation: true
 };
 
 export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
@@ -299,6 +301,19 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 				});
+
+			new Setting(this.containerEl)
+				.setName("Arrow key navigation between MathLive and editor")
+				.setDesc("When enabled, press arrow keys to enter or exit MathLive equation.")
+				.addToggle((cb) => {
+					cb.setValue(this.plugin.settings.arrowKeyNavigation);
+					cb.onChange(async (ev) => {
+						this.plugin.settings.arrowKeyNavigation = ev;
+						await this.plugin.saveSettings();
+					});
+
+				});
+
 			// new Setting(this.containerEl).setName("Force update").setHeading();
 
 			// new Setting(this.containerEl)
@@ -312,6 +327,7 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 			// 		this.plugin.global.forceUpdate = true;
 			// 	});
 		}
+
 	}
 }
 

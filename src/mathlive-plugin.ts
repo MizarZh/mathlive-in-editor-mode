@@ -7,7 +7,7 @@ import {
 	Transaction,
 	Extension,
 } from "@codemirror/state";
-import { Decoration, DecorationSet, EditorView, keymap } from "@codemirror/view";
+import { Decoration, DecorationSet, EditorView, keymap, type KeyBinding } from "@codemirror/view";
 import { MathLiveWidget } from "./mathlive-widget";
 import { MathLiveEditorModePluginSettings, Global } from "./setting";
 import type { MathfieldElement } from "mathlive";
@@ -61,47 +61,56 @@ function tryEnter(
 	return false;
 }
 
-/** When cursor is at formula boundary, Arrow keys enter MathLive (keymap + capture for Up/Down). */
+/** One arrow-key binding: run tryEnter when arrowKeyNavigation is on and match(view) hits. */
+function arrowEnterBinding(
+	key: string,
+	match: (e: MathFieldEntry, head: number, doc: Text) => boolean,
+	atStart: boolean,
+	settings: MathLiveEditorModePluginSettings
+): KeyBinding {
+	return {
+		key,
+		run: (v) => (!settings.arrowKeyNavigation ? false : tryEnter(v, match, atStart)),
+	};
+}
+
+/** When cursor is at formula boundary, Arrow keys enter MathLive (keymap). Checked at runtime so disabling arrowKeyNavigation takes effect without reload. */
 function enterMathLiveOnArrow(
-	_settings: MathLiveEditorModePluginSettings,
+	settings: MathLiveEditorModePluginSettings,
 	_global: Global
 ): Extension {
 	return Prec.highest(
 		keymap.of([
-			{
-				key: "ArrowRight",
-				run: (v) =>
-					tryEnter(
-						v,
-						(e, head) => head === (e.isInline ? e.from - 1 : e.to + 2),
-						true
-					),
-			},
-			{
-				key: "ArrowLeft",
-				run: (v) =>
-					tryEnter(
-						v,
-						(e, head) => head === (e.isInline ? e.from : e.to + 3),
-						false
-					),
-			},
-			{
-				key: "ArrowDown",
-				run: (v) =>
-					tryEnter(v, (e, head, doc) => {
-						if (e.isInline) return false;
-						return doc.lineAt(v.state.selection.main.head).number === doc.lineAt(Math.min(e.to + 2, doc.length)).number;
-					}, true),
-			},
-			{
-				key: "ArrowUp",
-				run: (v) =>
-					tryEnter(v, (e, head, doc) => {
-						if (e.isInline) return false;
-						return doc.lineAt(v.state.selection.main.head).number === doc.lineAt(Math.min(e.to + 3, doc.length)).number;
-					}, false),
-			},
+			arrowEnterBinding(
+				"ArrowRight",
+				(e, head) => head === (e.isInline ? e.from - 1 : e.to + 2),
+				true,
+				settings
+			),
+			arrowEnterBinding(
+				"ArrowLeft",
+				(e, head) => head === (e.isInline ? e.from : e.to + 3),
+				false,
+				settings
+			),
+			arrowEnterBinding(
+				"ArrowDown",
+				(e, head, doc) => {
+					if (e.isInline) return false;
+					return doc.lineAt(head).number === doc.lineAt(Math.min(e.to + 2, doc.length)).number;
+				},
+				true,
+				settings
+			),
+			arrowEnterBinding(
+				"ArrowUp",
+				(e, head, doc) => {
+					if (e.isInline) return false;
+					return doc.lineAt(head).number === doc.lineAt(Math.min(e.to + 3, doc.length)).number;
+				},
+				false,
+				settings
+			),
 		])
 	);
 }

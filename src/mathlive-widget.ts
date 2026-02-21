@@ -1,3 +1,4 @@
+import { EditorSelection } from "@codemirror/state";
 import { EditorView, WidgetType } from "@codemirror/view";
 import {
 	MathfieldElement,
@@ -43,6 +44,7 @@ export class MathLiveWidget extends WidgetType {
 		const mfe = document.createElement("math-field") as MathfieldElement;
 		div.appendChild(mfe);
 		div.addClass("obsidian-mathlive-codemirror-wrapper");
+		div.addClass("cm-line");
 		mfe.defaultMode = this.isInline ? "inline-math" : "math";
 		mfe.addClass("obsidian-mathlive-codemirror-math-field");
 		mfe.setValue(this.equation);
@@ -122,7 +124,7 @@ export class MathLiveWidget extends WidgetType {
 			});
 		}
 
-		// Esc to cancel changes
+		// Esc to cancel (on mfe)
 		mfe.addEventListener("keydown", (ev: KeyboardEvent) => {
 			if (ev.key === "Escape") {
 				mfe.setValue(initialValue);
@@ -132,6 +134,71 @@ export class MathLiveWidget extends WidgetType {
 				ev.stopPropagation();
 			}
 		});
+
+		// Arrow keys at boundaries: exit to LaTeX (on wrapper, capture phase, so we run before MathLive)
+		const exitToEditor = (cursorPos: number) => {
+			// mfe.blur();
+			view.dispatch({ selection: EditorSelection.single(cursorPos) });
+			view.focus();
+		};
+		div.addEventListener("keydown", (ev: KeyboardEvent) => {
+			if (document.activeElement !== mfe && !mfe.contains(document.activeElement)) return;
+			// Use current range from dataset (updated by dispatchChange when LaTeX changes)
+			const from = parseInt(mfe.dataset.from ?? String(this.config.from), 10);
+			const to = parseInt(mfe.dataset.to ?? String(this.config.to), 10);
+			const posBefore = this.isInline ? from - 1 : to;
+			const posAfter = this.isInline ? from : to + 3;
+			const atStart = mfe.position === 0;
+			const atEnd = mfe.position === mfe.lastOffset;
+			if (ev.key === "ArrowLeft" && atStart) {
+				ev.preventDefault();
+				ev.stopPropagation();
+				exitToEditor(posBefore);
+				return;
+			}
+			if (ev.key === "ArrowRight" && atEnd) {
+				ev.preventDefault();
+				ev.stopPropagation();
+				exitToEditor(posAfter);
+				return;
+			}
+
+			// Only jump to prev/next line when at outermost level (not inside \frac{}{} etc.)
+			const info = mfe.getElementInfo?.(mfe.position);
+			const atOutermost = info?.depth === 0;
+			// Use visual lines (wrapped) instead of document lines
+			if (ev.key === "ArrowUp" && atOutermost) {
+				// const block = view.lineBlockAt(to + 2);
+				// block.top starting from the same line as math-field and last $$ symbol
+				// if (block.top > 0) {
+				// 	const prevBlock = view.lineBlockAtHeight(block.top + 0.1);
+				// 	ev.preventDefault();
+				// 	ev.stopPropagation();
+				// 	exitToEditor(prevBlock.to);
+				// 	return;
+				// }
+				ev.preventDefault();
+				ev.stopPropagation();
+				exitToEditor(posBefore);
+				return;
+			}
+			if (ev.key === "ArrowDown" && atOutermost) {
+				// const block = view.lineBlockAt(to + 3);
+				// if (block.bottom < view.contentHeight - 1) {
+				// 	console.log(block.bottom)
+				// 	const nextBlock = view.lineBlockAtHeight(block.bottom);
+				// 	ev.preventDefault();
+				// 	ev.stopPropagation();
+				// 	exitToEditor(nextBlock.from);
+				// 	return;
+				// }
+				ev.preventDefault();
+				ev.stopPropagation();
+				exitToEditor(posAfter);
+				return;
+			}
+
+		}, true);
 
 		return div;
 	}

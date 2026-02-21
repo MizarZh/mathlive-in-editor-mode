@@ -137,7 +137,8 @@ export class MathLiveWidget extends WidgetType {
 
 		// Arrow keys at boundaries: exit to LaTeX (on wrapper, capture phase, so we run before MathLive)
 		const exitToEditor = (cursorPos: number) => {
-			// mfe.blur();
+			const docLen = view.state.doc.length;
+			if (cursorPos < 0 || cursorPos > docLen) return;
 			view.dispatch({ selection: EditorSelection.single(cursorPos) });
 			view.focus();
 		};

@@ -41,11 +41,19 @@
 
 /* Hide MathJax when the setting is enabled */
 body.mathlive-hide-mathjax-block .cm-editor div.math mjx-container {
-	display: none !important;
+	display: none;
+}
+
+body.mathlive-hide-mathjax-block .cm-editor div.callout .math-block mjx-container {
+	display: block !important;
 }
 
 body.mathlive-hide-mathjax-inline .cm-editor span.math mjx-container {
-	display: none !important;
+	display: none;
+}
+
+body.mathlive-hide-mathjax-inline .cm-editor div.callout .math-inline mjx-container {
+	display: inline !important;
 }
 
 math-field.hide-keyboard::part(virtual-keyboard-toggle) {

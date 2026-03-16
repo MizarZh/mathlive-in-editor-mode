@@ -20,12 +20,16 @@
 }
 
 .obsidian-mathlive-codemirror-wrapper.inline {
-	display: inline;
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
 	/* float: right; */
 	/* transform: translateX(100%); */
 }
 
 .obsidian-mathlive-codemirror-wrapper.inline math-field {
+	max-width: 100%;
+	overflow: auto;
 	display: inline-block;
 	margin: 0 3px;
 }

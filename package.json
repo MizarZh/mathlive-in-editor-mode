@@ -21,16 +21,16 @@
 		"@types/node": "^16.11.6",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.25.5",
-		"eslint-plugin-obsidianmd": "0.1.9",
+		"eslint-plugin-obsidianmd": "^0.4.1",
 		"globals": "14.0.0",
 		"jiti": "2.6.1",
-		"obsidian": "1.12.3",
+		"obsidian": "latest",
 		"tslib": "2.4.0",
 		"typescript": "5.8.3",
 		"typescript-eslint": "8.35.1"
 	},
 	"dependencies": {
 		"json5": "^2.2.3",
-		"mathlive": "0.108.3"
+		"mathlive": "0.110.0"
 	}
 }

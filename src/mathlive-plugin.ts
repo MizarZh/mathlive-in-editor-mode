@@ -2,6 +2,7 @@ import { syntaxTree } from "@codemirror/language";
 import type { Text } from "@codemirror/state";
 import {
 	EditorSelection,
+	EditorState,
 	Prec,
 	RangeSetBuilder,
 	StateField,
@@ -244,25 +245,14 @@ export const mathliveListFieldWrapper = (
 	settings: MathLiveEditorModePluginSettings,
 	global: Global
 ) => {
-	const mathliveListField = StateField.define<DecorationSet>({
-		create(state): DecorationSet {
-			return Decoration.none;
-		},
-		update(
-			oldState: DecorationSet,
-			transaction: Transaction
-		): DecorationSet {
+	const buildDecorations = (state: EditorState): DecorationSet => {
 			const builder = new RangeSetBuilder<Decoration>();
 			let begin = -1,
 				end = -1,
 				isInline = false;
 
-			syntaxTree(transaction.state).iterate({
+			syntaxTree(state).iterate({
 				enter(node) {
-					// console.log(node.type.name);
-					// console.log(EditorView.editable);
-					// console.log(transaction.state);
-
 					if (node.type.name.contains("formatting-math-begin")) {
 						if (node.type.name.contains("math-block"))
 							begin = node.from + 2;
@@ -276,7 +266,7 @@ export const mathliveListFieldWrapper = (
 						begin !== -1
 					) {
 						end = node.from;
-						const mathContent = transaction.state.sliceDoc(begin, end);
+						const mathContent = state.sliceDoc(begin, end);
 
 						if (!isInline) {
 							// block
@@ -323,6 +313,17 @@ export const mathliveListFieldWrapper = (
 			});
 
 			return builder.finish();
+	};
+
+	const mathliveListField = StateField.define<DecorationSet>({
+		create(state): DecorationSet {
+			return buildDecorations(state);
+		},
+		update(
+			_oldState: DecorationSet,
+			transaction: Transaction
+		): DecorationSet {
+			return buildDecorations(transaction.state);
 		},
 		provide(field: StateField<DecorationSet>): Extension {
 			return [

@@ -1,6 +1,7 @@
 import { Plugin } from "obsidian";
 import { mathliveListFieldWrapper, refreshMathLiveEditors } from "./mathlive-plugin";
 import { MathfieldElement } from "mathlive";
+import { disposeMathLiveWidgetResources } from "./mathlive-widget";
 import {
 	MathLiveEditorModePluginSettings,
 	DEFAULT_SETTINGS,
@@ -56,6 +57,7 @@ export default class MathLiveInEditorMode extends Plugin {
 	}
 
 	onunload() {
+		disposeMathLiveWidgetResources();
 		document.body.removeClass("mathlive-hide-mathjax-block");
 		document.body.removeClass("mathlive-hide-mathjax-inline");
 	}

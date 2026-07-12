@@ -37,6 +37,7 @@ export class MathLiveWidget extends WidgetType {
 	settings: MathLiveEditorModePluginSettings;
 	isInline: boolean;
 	global: Global;
+	private initializationTimeout: number | null = null;
 
 	constructor(
 		config: WidgetConfig,
@@ -68,7 +69,10 @@ export class MathLiveWidget extends WidgetType {
 		this.setupTouchKeyboard(mfe);
 
 		// have to put them in setTimeout, mfe is somehow not initialized
-		setTimeout(() => {
+		this.initializationTimeout = window.setTimeout(() => {
+			this.initializationTimeout = null;
+			if (!mfe.isConnected) return;
+
 			this.applyMathLiveSettings(mfe);
 			this.configureTouchKeyboard(mfe);
 
@@ -302,6 +306,11 @@ export class MathLiveWidget extends WidgetType {
 		return true;
 	}
 	destroy(dom: HTMLElement): void {
+		if (this.initializationTimeout !== null) {
+			window.clearTimeout(this.initializationTimeout);
+			this.initializationTimeout = null;
+		}
+
 		const mfe = dom.getElementsByTagName(
 			"math-field"
 		)[0] as MathfieldElement;
@@ -503,6 +512,11 @@ class KeyboardCollapseButtonManager {
 		return this.instance;
 	}
 
+	static disposeInstance(): void {
+		this.instance?.dispose();
+		this.instance = null;
+	}
+
 	private constructor() { }
 
 	private getToolbars(): HTMLElement[] {
@@ -557,10 +571,26 @@ class KeyboardCollapseButtonManager {
 	}
 
 	private stopObserving(): void {
-		if (this.observer) {
-			this.observer.disconnect();
-			this.isObserving = false;
+		this.observer?.disconnect();
+		this.observer = null;
+		this.isObserving = false;
+	}
+
+	public dispose(): void {
+		for (const timeout of this.pendingTimeouts) {
+			window.clearTimeout(timeout);
 		}
+		this.pendingTimeouts.clear();
+
+		if (this.observerStopTimeout !== null) {
+			window.clearTimeout(this.observerStopTimeout);
+			this.observerStopTimeout = null;
+		}
+
+		this.stopObserving();
+		document.querySelectorAll(`.${this.COLLAPSE_BUTTON_CLASS}`).forEach(
+			(button) => button.remove()
+		);
 	}
 
 	public ensureButton(): void {
@@ -595,4 +625,8 @@ class KeyboardCollapseButtonManager {
 			this.stopObserving();
 		}, 1500);
 	}
+}
+
+export function disposeMathLiveWidgetResources(): void {
+	KeyboardCollapseButtonManager.disposeInstance();
 }

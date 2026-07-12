@@ -17,6 +17,21 @@ interface WidgetConfig {
 
 const processedKeyboards = new WeakSet<HTMLElement>();
 
+function isKeybinding(value: unknown): value is Keybinding {
+	if (typeof value !== "object" || value === null) return false;
+
+	const candidate = value as Record<string, unknown>;
+	const validCommand =
+		(typeof candidate.command === "string" && candidate.command.length > 0) ||
+		(Array.isArray(candidate.command) &&
+			typeof candidate.command[0] === "string" &&
+			candidate.command[0].length > 0);
+
+	return typeof candidate.key === "string" &&
+		candidate.key.trim().length > 0 &&
+		validCommand;
+}
+
 export class MathLiveWidget extends WidgetType {
 	equation: string;
 	config: WidgetConfig;
@@ -272,19 +287,23 @@ export class MathLiveWidget extends WidgetType {
 			if (mfe.dataset.keybindings !== this.settings.keybindings) {
 				// If baseKeybindings is not initialized yet, get it from mfe first
 				if (this.global.baseKeybindings.length === 0) {
-					this.global.baseKeybindings = mfe.keybindings as Keybinding[];
+					this.global.baseKeybindings = [...mfe.keybindings] as Keybinding[];
 				}
-				let keybindings = this.settings.keybindings;
-				if (this.settings.keybindings.trim() === "") {
-					keybindings = "[]";
+				let customKeybindings: unknown = [];
+				if (this.settings.keybindings.trim() !== "") {
+					customKeybindings = json5parse(this.settings.keybindings);
 				}
-				const keybindingsJSON = json5parse(keybindings) as Keybinding[];
-				if (keybindingsJSON.length !== 0) {
-					mfe.keybindings = {
-						...this.global.baseKeybindings,
-						...keybindingsJSON,
-					};
+				if (
+					!Array.isArray(customKeybindings) ||
+					!customKeybindings.every(isKeybinding)
+				) {
+					throw new Error("Keybindings must be an array of valid keybinding objects.");
 				}
+				mfe.keybindings = [
+					...this.global.baseKeybindings,
+					...customKeybindings,
+				];
+				mfe.dataset.keybindings = this.settings.keybindings;
 			}
 		} catch (e) {
 			new Notice("MathLive: Incorrect keybinding settings.");

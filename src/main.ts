@@ -1,5 +1,5 @@
 import { Plugin } from "obsidian";
-import { mathliveListFieldWrapper } from "./mathlive-plugin";
+import { mathliveListFieldWrapper, refreshMathLiveEditors } from "./mathlive-plugin";
 import { MathfieldElement } from "mathlive";
 import {
 	MathLiveEditorModePluginSettings,
@@ -43,9 +43,6 @@ export default class MathLiveInEditorMode extends Plugin {
 				this.settings.display = !this.settings.display;
 				// console.log("toggle mathlive block display");
 				await this.saveSettings();
-				// update editor state
-				const curser = editor.getCursor();
-				editor.setCursor(curser);
 				if (this.settings.display) {
 					this.updateMathJaxVisibility();
 				} else {
@@ -73,6 +70,7 @@ export default class MathLiveInEditorMode extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+		refreshMathLiveEditors();
 		// Update MathJax visibility when settings change
 		this.updateMathJaxVisibility();
 	}

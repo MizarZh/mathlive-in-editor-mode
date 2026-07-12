@@ -103,32 +103,29 @@ export class MathLiveWidget extends WidgetType {
 			}
 		};
 
-		// mfe -> editor
-		if (this.settings.immediateUpdate) {
-			// Immediate update mode: dispatch on every input
-			mfe.addEventListener("input", (ev: InputEvent) => {
-				const target = ev.target as MathfieldElement;
+		// Read the mode at event time so settings changes affect existing fields.
+		mfe.addEventListener("input", (ev: InputEvent) => {
+			const target = ev.target as MathfieldElement;
+			if (this.settings.immediateUpdate) {
 				if (this.equation !== target.value) {
-					dispatchChange(mfe.value);
+					dispatchChange(target.value);
 				}
-			});
-		} else {
-			// Blur update mode: only mark changes on input, dispatch on blur
-			mfe.addEventListener("input", (ev: InputEvent) => {
+				mfe.dataset.hasUnsavedChanges = "false";
+			} else {
 				mfe.dataset.hasUnsavedChanges = "true";
-			});
+			}
+		});
 
-			// Dispatch changes on blur
-			mfe.addEventListener("blur", () => {
-				if (mfe.dataset.hasUnsavedChanges === "true") {
-					const newValue = mfe.value;
-					if (newValue !== this.equation) {
-						dispatchChange(newValue);
-					}
-					mfe.dataset.hasUnsavedChanges = "false";
+		// Dispatch deferred changes on blur.
+		mfe.addEventListener("blur", () => {
+			if (mfe.dataset.hasUnsavedChanges === "true") {
+				const newValue = mfe.value;
+				if (newValue !== this.equation) {
+					dispatchChange(newValue);
 				}
-			});
-		}
+				mfe.dataset.hasUnsavedChanges = "false";
+			}
+		});
 
 		// Esc to cancel (on mfe)
 		mfe.addEventListener("keydown", (ev: KeyboardEvent) => {

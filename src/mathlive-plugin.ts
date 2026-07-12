@@ -5,11 +5,12 @@ import {
 	EditorState,
 	Prec,
 	RangeSetBuilder,
+	StateEffect,
 	StateField,
 	Transaction,
 	Extension,
 } from "@codemirror/state";
-import { Decoration, DecorationSet, EditorView, keymap, type KeyBinding } from "@codemirror/view";
+import { Decoration, DecorationSet, EditorView, keymap, type KeyBinding, ViewPlugin } from "@codemirror/view";
 import { MathLiveWidget } from "./mathlive-widget";
 import { getMathNavigationPositions } from "./math-boundaries";
 import { MathLiveEditorModePluginSettings, Global } from "./setting";
@@ -21,6 +22,28 @@ type MathFieldEntry = {
 	to: number;
 	isInline: boolean;
 };
+
+export const mathLiveSettingsChanged = StateEffect.define<void>();
+
+const mathLiveEditorViews = new Set<EditorView>();
+const trackMathLiveEditorViews = ViewPlugin.fromClass(class {
+	private view: EditorView;
+
+	constructor(view: EditorView) {
+		this.view = view;
+		mathLiveEditorViews.add(view);
+	}
+
+	destroy(): void {
+		mathLiveEditorViews.delete(this.view);
+	}
+});
+
+export function refreshMathLiveEditors(): void {
+	for (const view of mathLiveEditorViews) {
+		view.dispatch({ effects: mathLiveSettingsChanged.of(undefined) });
+	}
+}
 
 function isFocusInMathField(): boolean {
 	const active = document.activeElement as HTMLElement | null;
@@ -340,5 +363,5 @@ export const mathliveListFieldWrapper = (
 			];
 		},
 	});
-	return mathliveListField;
+	return [mathliveListField, trackMathLiveEditorViews];
 };

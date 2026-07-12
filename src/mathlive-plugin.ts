@@ -13,7 +13,7 @@ import {
 import { Decoration, DecorationSet, EditorView, keymap, type KeyBinding, ViewPlugin } from "@codemirror/view";
 import { MathLiveWidget } from "./mathlive-widget";
 import { getMathNavigationPositions } from "./math-boundaries";
-import { MathLiveEditorModePluginSettings, Global } from "./setting";
+import type { MathLiveEditorModePluginSettings, Global } from "./settings-model";
 import type { MathfieldElement } from "mathlive";
 
 type MathFieldEntry = {

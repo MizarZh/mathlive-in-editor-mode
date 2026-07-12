@@ -1,14 +1,14 @@
 import { Plugin } from "obsidian";
 import { mathliveListFieldWrapper, refreshMathLiveEditors } from "./mathlive-plugin";
 import { MathfieldElement } from "mathlive";
-import { disposeMathLiveWidgetResources } from "./mathlive-widget";
+import { disposeKeyboardCollapseManager } from "./keyboard-collapse-manager";
 import {
 	MathLiveEditorModePluginSettings,
 	DEFAULT_SETTINGS,
-	MathLiveEditorModeSettingsTab,
 	Global,
 	parseMathLiveSettings,
-} from "./setting";
+} from "./settings-model";
+import { MathLiveEditorModeSettingsTab } from "./setting";
 
 export default class MathLiveInEditorMode extends Plugin {
 	settings: MathLiveEditorModePluginSettings;
@@ -65,7 +65,7 @@ export default class MathLiveInEditorMode extends Plugin {
 			this.settingsSaveTimeout = null;
 			void this.saveData(this.settings);
 		}
-		disposeMathLiveWidgetResources();
+		disposeKeyboardCollapseManager();
 		document.body.removeClass("mathlive-hide-mathjax-block");
 		document.body.removeClass("mathlive-hide-mathjax-inline");
 	}

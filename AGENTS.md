@@ -22,10 +22,12 @@ This repository contains **MathLive in Editor Mode**, an Obsidian plugin that ad
 - `src/main.ts`: plugin lifecycle, settings persistence, command registration, custom element registration, editor extension setup, and MathJax visibility classes.
 - `src/mathlive-plugin.ts`: CodeMirror state field and decorations. It scans math syntax nodes, creates widgets, and handles entry into MathLive with arrow keys.
 - `src/mathlive-widget.ts`: MathLive field creation, source synchronization, cancellation, navigation back to CodeMirror, runtime settings application, styling state, and virtual keyboard collapse control.
-- `src/setting.ts`: settings schema, defaults, and Obsidian settings UI.
+- `src/math-boundaries.ts`: shared inline and block formula navigation and decoration positions.
+- `src/keyboard-collapse-manager.ts`: virtual-keyboard collapse button injection, retries, observer, timers, and disposal.
+- `src/settings-model.ts`: settings schema, defaults, JSON5 parsing, validation, and parsed runtime cache types.
+- `src/setting.ts`: Obsidian settings UI, field-level validation display, and debounced save triggers.
 - `src/utils.ts`: JSON5 macro conversion to LaTeX `\newcommand` declarations.
-- `styles.css`: plugin UI rules, MathJax visibility rules, MathLive part visibility, and bundled KaTeX font data.
-- `fonts/`: additional KaTeX font CSS assets.
+- `styles.css`: plugin UI rules, MathJax visibility rules, scoped MathLive part visibility, and bundled KaTeX font data for offline loading.
 - `manifest.json` and `versions.json`: Obsidian plugin metadata and compatibility data.
 - `esbuild.config.mjs`: TypeScript bundling into `main.js`; Obsidian, Electron, CodeMirror, and Node built-ins remain external.
 
@@ -62,4 +64,3 @@ The build entry point is `src/main.ts`, and output is written to `main.js`. Ther
 - Arrow navigation depends on exact delimiter-relative positions and special handling for folded or wrapped block equations.
 - Settings objects are shared with editor extensions and checked at runtime, allowing most toggles to take effect without re-registering the extension.
 - Body classes used to hide MathJax must be removed during plugin unload.
-

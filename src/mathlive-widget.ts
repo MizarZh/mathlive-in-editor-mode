@@ -129,6 +129,18 @@ export class MathLiveWidget extends WidgetType {
 		// Esc to cancel (on mfe)
 		mfe.addEventListener("keydown", (ev: KeyboardEvent) => {
 			if (ev.key === "Escape") {
+				const from = parseInt(mfe.dataset.from ?? "", 10);
+				const to = parseInt(mfe.dataset.to ?? "", 10);
+				if (
+					!Number.isNaN(from) &&
+					!Number.isNaN(to) &&
+					from >= 0 &&
+					to >= from &&
+					to <= view.state.doc.length &&
+					view.state.doc.sliceString(from, to) !== initialValue
+				) {
+					dispatchChange(initialValue);
+				}
 				mfe.setValue(initialValue);
 				mfe.dataset.hasUnsavedChanges = "false";
 				mfe.blur();

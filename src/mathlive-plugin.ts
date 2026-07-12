@@ -351,9 +351,17 @@ export const mathliveListFieldWrapper = (
 			return buildDecorations(state);
 		},
 		update(
-			_oldState: DecorationSet,
+			oldState: DecorationSet,
 			transaction: Transaction
 		): DecorationSet {
+			const settingsChanged = transaction.effects.some((effect) =>
+				effect.is(mathLiveSettingsChanged)
+			);
+			const syntaxTreeChanged =
+				syntaxTree(transaction.startState) !== syntaxTree(transaction.state);
+			if (!transaction.docChanged && !settingsChanged && !syntaxTreeChanged) {
+				return oldState;
+			}
 			return buildDecorations(transaction.state);
 		},
 		provide(field: StateField<DecorationSet>): Extension {

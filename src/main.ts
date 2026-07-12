@@ -1,5 +1,6 @@
 import { Plugin } from "obsidian";
-import { mathliveListFieldWrapper, refreshMathLiveEditors } from "./mathlive-plugin";
+import { mathliveListFieldWrapper } from "./mathlive-plugin";
+import { refreshMathLiveEditors } from "./editor-refresh";
 import { MathfieldElement } from "mathlive";
 import { disposeKeyboardCollapseManager } from "./keyboard-collapse-manager";
 import {

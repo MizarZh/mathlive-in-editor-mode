@@ -20,8 +20,14 @@ This repository contains **MathLive in Editor Mode**, an Obsidian plugin that ad
 ## Architecture
 
 - `src/main.ts`: plugin lifecycle, settings persistence, command registration, custom element registration, editor extension setup, and MathJax visibility classes.
-- `src/mathlive-plugin.ts`: CodeMirror state field and decorations. It scans math syntax nodes, creates widgets, and handles entry into MathLive with arrow keys.
-- `src/mathlive-widget.ts`: MathLive field creation, source synchronization, cancellation, navigation back to CodeMirror, runtime settings application, styling state, and virtual keyboard collapse control.
+- `src/mathlive-plugin.ts`: CodeMirror StateField composition and decoration rebuild policy.
+- `src/editor-math-navigation.ts`: CodeMirror arrow-key entry into MathLive, including folded and wrapped block handling.
+- `src/mathlive-decorations.ts`: syntax-tree scanning and MathLive decoration construction.
+- `src/editor-refresh.ts`: settings refresh effect and live EditorView registry.
+- `src/mathlive-widget.ts`: MathLive field creation, source synchronization, cancellation, navigation back to CodeMirror, styling, and controller composition.
+- `src/mathlive-settings-applier.ts`: applies parsed macros, shortcuts, and keybindings while preserving MathLive defaults.
+- `src/mathlive-input-sync.ts`: immediate/deferred source synchronization and Escape cancellation.
+- `src/touch-keyboard-controller.ts`: Android backslash handling and touch/system/MathLive keyboard behavior.
 - `src/math-boundaries.ts`: shared inline and block formula navigation and decoration positions.
 - `src/keyboard-collapse-manager.ts`: virtual-keyboard collapse button injection, retries, observer, timers, and disposal.
 - `src/settings-model.ts`: settings schema, defaults, JSON5 parsing, validation, and parsed runtime cache types.

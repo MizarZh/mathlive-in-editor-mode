@@ -1,15 +1,16 @@
 import { EditorSelection } from "@codemirror/state";
 import { EditorView, WidgetType } from "@codemirror/view";
-import {
-	MathfieldElement,
-	InlineShortcutDefinitions,
-	MacroDictionary,
-	Keybinding,
-	VirtualKeyboardPolicy,
-} from "mathlive";
+import { MathfieldElement } from "mathlive";
 import type { MathLiveEditorModePluginSettings, Global } from "./settings-model";
 import { getMathNavigationPositions } from "./math-boundaries";
-import { KeyboardCollapseButtonManager } from "./keyboard-collapse-manager";
+import { applyMathLiveSettings } from "./mathlive-settings-applier";
+import { setupMathLiveInputSync } from "./mathlive-input-sync";
+import {
+	configureTouchKeyboard,
+	setupBackslashCommandInput,
+	setupKeyboardCollapseButton,
+	setupTouchKeyboard,
+} from "./touch-keyboard-controller";
 interface WidgetConfig {
 	from: number;
 	to: number;
@@ -49,93 +50,30 @@ export class MathLiveWidget extends WidgetType {
 		mfe.setValue(this.equation);
 		mfe.dataset.from = `${this.config.from}`;
 		mfe.dataset.to = `${this.config.to}`;
-		this.setupBackslashCommandInput(mfe);
-		this.setupTouchKeyboard(mfe);
+		setupBackslashCommandInput(mfe);
+		setupTouchKeyboard(mfe, this.settings, this.isInline);
 
 		// have to put them in setTimeout, mfe is somehow not initialized
 		this.initializationTimeout = window.setTimeout(() => {
 			this.initializationTimeout = null;
 			if (!mfe.isConnected) return;
 
-			this.applyMathLiveSettings(mfe);
-			this.configureTouchKeyboard(mfe);
+			applyMathLiveSettings(mfe, this.settings, this.global);
+			configureTouchKeyboard(mfe, this.settings, this.isInline);
 
 			// Setup keyboard close button injection
-			this.setupKeyboardCollapseButton(mfe);
+			setupKeyboardCollapseButton(mfe);
 		}, 0);
 
 		this.style(mfe, div);
 
-		// Save initial value (for Esc to cancel)
-		const initialValue = this.equation;
-		mfe.dataset.initialValue = initialValue;
-
-		// Helper function to dispatch changes
-		const dispatchChange = (newValue: string) => {
-			if (
-				mfe.dataset.from !== undefined &&
-				mfe.dataset.to !== undefined
-			) {
-				view.dispatch({
-					changes: {
-						from: parseInt(mfe.dataset.from),
-						to: parseInt(mfe.dataset.to),
-						insert: newValue,
-					},
-				});
-				this.equation = newValue;
-				// Update 'to' position (content length may have changed)
-				mfe.dataset.to = String(
-					parseInt(mfe.dataset.from) + newValue.length
-				);
-			}
-		};
-
-		// Read the mode at event time so settings changes affect existing fields.
-		mfe.addEventListener("input", (ev: InputEvent) => {
-			const target = ev.target as MathfieldElement;
-			if (this.settings.immediateUpdate) {
-				if (this.equation !== target.value) {
-					dispatchChange(target.value);
-				}
-				mfe.dataset.hasUnsavedChanges = "false";
-			} else {
-				mfe.dataset.hasUnsavedChanges = "true";
-			}
-		});
-
-		// Dispatch deferred changes on blur.
-		mfe.addEventListener("blur", () => {
-			if (mfe.dataset.hasUnsavedChanges === "true") {
-				const newValue = mfe.value;
-				if (newValue !== this.equation) {
-					dispatchChange(newValue);
-				}
-				mfe.dataset.hasUnsavedChanges = "false";
-			}
-		});
-
-		// Esc to cancel (on mfe)
-		mfe.addEventListener("keydown", (ev: KeyboardEvent) => {
-			if (ev.key === "Escape") {
-				const from = parseInt(mfe.dataset.from ?? "", 10);
-				const to = parseInt(mfe.dataset.to ?? "", 10);
-				if (
-					!Number.isNaN(from) &&
-					!Number.isNaN(to) &&
-					from >= 0 &&
-					to >= from &&
-					to <= view.state.doc.length &&
-					view.state.doc.sliceString(from, to) !== initialValue
-				) {
-					dispatchChange(initialValue);
-				}
-				mfe.setValue(initialValue);
-				mfe.dataset.hasUnsavedChanges = "false";
-				mfe.blur();
-				ev.preventDefault();
-				ev.stopPropagation();
-			}
+		setupMathLiveInputSync({
+			mfe,
+			view,
+			settings: this.settings,
+			initialValue: this.equation,
+			getEquation: () => this.equation,
+			onEquationChange: (value) => { this.equation = value; },
 		});
 
 		// Arrow keys at boundaries: exit to LaTeX (on wrapper, capture phase, so we run before MathLive)
@@ -193,60 +131,14 @@ export class MathLiveWidget extends WidgetType {
 
 		return div;
 	}
-	private applyMathLiveSettings(mfe: MathfieldElement): void {
-		const parsed = this.global.parsedSettings;
-		if (
-			mfe.dataset.macros !== this.settings.macros &&
-			parsed.macros !== null
-		) {
-			// If baseMacros is not initialized yet, get it from mfe first
-			if (Object.keys(this.global.baseMacros).length === 0) {
-				this.global.baseMacros = mfe.macros as MacroDictionary;
-			}
-			mfe.macros = { ...this.global.baseMacros, ...parsed.macros };
-			mfe.dataset.macros = this.settings.macros;
-		}
-
-		if (
-			mfe.dataset.shortcuts !== this.settings.inlineShortcuts &&
-			parsed.inlineShortcuts !== null
-		) {
-			// If baseShortcuts is not initialized yet, get it from mfe first
-			if (Object.keys(this.global.baseShortcuts).length === 0) {
-				this.global.baseShortcuts =
-					mfe.inlineShortcuts as InlineShortcutDefinitions;
-			}
-			mfe.inlineShortcuts = {
-				...this.global.baseShortcuts,
-				...parsed.inlineShortcuts,
-			};
-			mfe.dataset.shortcuts = this.settings.inlineShortcuts;
-		}
-
-		if (
-			mfe.dataset.keybindings !== this.settings.keybindings &&
-			parsed.keybindings !== null
-		) {
-			// If baseKeybindings is not initialized yet, get it from mfe first
-			if (this.global.baseKeybindings.length === 0) {
-				this.global.baseKeybindings = [...mfe.keybindings] as Keybinding[];
-			}
-			mfe.keybindings = [
-				...this.global.baseKeybindings,
-				...parsed.keybindings,
-			];
-			mfe.dataset.keybindings = this.settings.keybindings;
-		}
-	}
-
 	updateDOM(dom: HTMLElement, view: EditorView): boolean {
 		// editor -> mfe
 		const mfe = dom.getElementsByTagName(
 			"math-field"
 		)[0] as MathfieldElement;
 
-		this.applyMathLiveSettings(mfe);
-		this.configureTouchKeyboard(mfe);
+		applyMathLiveSettings(mfe, this.settings, this.global);
+		configureTouchKeyboard(mfe, this.settings, this.isInline);
 
 		this.style(mfe, dom as HTMLDivElement);
 
@@ -323,122 +215,6 @@ export class MathLiveWidget extends WidgetType {
 		}
 	}
 
-	setupBackslashCommandInput(mfe: MathfieldElement) {
-		const root = mfe.shadowRoot;
-		if (!root) return;
-
-		root.addEventListener(
-			"beforeinput",
-			(event) => {
-				const inputEvent = event as InputEvent;
-				if (
-					!inputEvent.cancelable ||
-					inputEvent.isComposing ||
-					inputEvent.inputType !== "insertText" ||
-					inputEvent.data !== "\\" ||
-					mfe.mode !== "math"
-				) {
-					return;
-				}
-
-				inputEvent.preventDefault();
-				inputEvent.stopImmediatePropagation();
-				mfe.executeCommand([
-					"typedText",
-					"\\",
-					{
-						focus: true,
-						feedback: false,
-						simulateKeystroke: true,
-					},
-				]);
-			},
-			{ capture: true }
-		);
-	}
-
-	setupTouchKeyboard(mfe: MathfieldElement) {
-		this.configureTouchKeyboard(mfe);
-		const showAlways = () => {
-			if (
-				this.settings.touchKeyboardProvider === "mathlive" &&
-				this.settings.mathVirtualKeyboardMode === "always"
-			) {
-				window.mathVirtualKeyboard?.show();
-			}
-		};
-		mfe.addEventListener("focusin", showAlways);
-		mfe.addEventListener("focusout", (event) => {
-			if (
-				!this.settings.hideMathVirtualKeyboardOnBlur ||
-				this.settings.touchKeyboardProvider !== "mathlive"
-			) {
-				return;
-			}
-
-			const nextTarget = event.relatedTarget;
-			if (
-				nextTarget instanceof Element &&
-				(nextTarget.closest("math-field") || nextTarget.closest(".ML__keyboard"))
-			) {
-				return;
-			}
-
-			requestAnimationFrame(() => {
-				const activeElement = document.activeElement;
-				const keyboardFocused = activeElement instanceof Element &&
-					activeElement.closest(".ML__keyboard");
-				if (!document.querySelector("math-field:focus-within") && !keyboardFocused) {
-					window.mathVirtualKeyboard?.hide();
-				}
-			});
-		});
-		mfe.addEventListener(
-			"pointerdown",
-			() => {
-				this.configureTouchKeyboard(mfe);
-				showAlways();
-			},
-			{ capture: true }
-		);
-	}
-
-	configureTouchKeyboard(mfe: MathfieldElement) {
-		const provider = this.settings.touchKeyboardProvider;
-		const sink = mfe.shadowRoot?.querySelector<HTMLElement>(
-			'[part="keyboard-sink"]'
-		);
-		if (sink) {
-			sink.setAttribute("inputmode", provider === "system" ? "text" : "none");
-		}
-
-		mfe.mathVirtualKeyboardPolicy = provider === "mathlive"
-			? this.settings.mathVirtualKeyboardMode === "always"
-				? "manual"
-				: this.settings.mathVirtualKeyboardMode as VirtualKeyboardPolicy
-			: "manual";
-
-		const showKeyboardIcon = provider === "mathlive" &&
-			(this.isInline
-				? this.settings.inlineKeyboardIcon
-				: this.settings.blockKeyboardIcon);
-		this.changeCSSClass(showKeyboardIcon, mfe, "hide-keyboard");
-
-		if (provider !== "mathlive") {
-			window.mathVirtualKeyboard?.hide();
-		}
-	}
-
-	setupKeyboardCollapseButton(mfe: MathfieldElement) {
-		const manager = KeyboardCollapseButtonManager.getInstance();
-
-		const handleInteraction = () => {
-			manager.ensureButton();
-		};
-
-		mfe.addEventListener('focus', handleInteraction);
-		mfe.addEventListener('click', handleInteraction);
-	}
 	// eq(other: MathLiveWidget) {
 	// 	// Only compare anchor position (from) and type, not 'to' or 'equation'
 	// 	// This allows CodeMirror to reuse DOM when content changes, avoiding rebuild and focus loss

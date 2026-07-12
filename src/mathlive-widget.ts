@@ -481,7 +481,8 @@ export class MathLiveWidget extends WidgetType {
 // Global keyboard close button manager
 class KeyboardCollapseButtonManager {
 	private observer: MutationObserver | null = null;
-	private pendingTimeout: number | null = null;
+	private pendingTimeouts = new Set<number>();
+	private observerStopTimeout: number | null = null;
 	private isObserving = false;
 	private readonly COLLAPSE_BUTTON_CLASS = 'obsidian-mathlive-keyboard-collapse';
 	private readonly TOOLBAR_SELECTOR = '.ML__edit-toolbar';
@@ -536,11 +537,9 @@ class KeyboardCollapseButtonManager {
 		if (this.isObserving) return;
 
 		this.observer = new MutationObserver(() => {
-			if (!this.isKeyboardVisible()) {
-				this.stopObserving();
-				return;
+			if (this.isKeyboardVisible()) {
+				this.injectButton();
 			}
-			this.injectButton();
 		});
 
 		this.observer.observe(document.body, {
@@ -559,26 +558,35 @@ class KeyboardCollapseButtonManager {
 	}
 
 	public ensureButton(): void {
-		// Cancel any pending timeout to avoid accumulation
-		if (this.pendingTimeout !== null) {
-			clearTimeout(this.pendingTimeout);
-			this.pendingTimeout = null;
+		for (const timeout of this.pendingTimeouts) {
+			clearTimeout(timeout);
+		}
+		this.pendingTimeouts.clear();
+
+		if (this.observerStopTimeout !== null) {
+			clearTimeout(this.observerStopTimeout);
+			this.observerStopTimeout = null;
 		}
 
-		// Only proceed if keyboard is actually visible
-		if (!this.isKeyboardVisible()) {
-			return;
-		}
-
-		// Schedule button injection
-		this.pendingTimeout = window.setTimeout(() => {
-			this.pendingTimeout = null;
+		// Android may create and rebuild the keyboard after the field interaction.
+		this.startObserving();
+		if (this.isKeyboardVisible()) {
 			this.injectButton();
+		}
 
-			// Start observing only when keyboard is visible
-			if (!this.isObserving) {
-				this.startObserving();
-			}
-		}, 300);
+		for (const delay of [100, 300, 600, 1000]) {
+			const timeout = window.setTimeout(() => {
+				this.pendingTimeouts.delete(timeout);
+				if (this.isKeyboardVisible()) {
+					this.injectButton();
+				}
+			}, delay);
+			this.pendingTimeouts.add(timeout);
+		}
+
+		this.observerStopTimeout = window.setTimeout(() => {
+			this.observerStopTimeout = null;
+			this.stopObserving();
+		}, 1500);
 	}
 }

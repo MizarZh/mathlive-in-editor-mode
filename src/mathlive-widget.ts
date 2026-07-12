@@ -16,8 +16,6 @@ interface WidgetConfig {
 	to: number;
 }
 
-const processedKeyboards = new WeakSet<HTMLElement>();
-
 function isKeybinding(value: unknown): value is Keybinding {
 	if (typeof value !== "object" || value === null) return false;
 

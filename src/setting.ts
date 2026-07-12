@@ -9,6 +9,7 @@ import {
 } from "mathlive";
 
 export type TouchKeyboardProvider = "mathlive" | "system" | "disabled";
+export type MathVirtualKeyboardMode = VirtualKeyboardPolicy | "always";
 
 export interface Global {
 	// previousMacros: string;
@@ -35,7 +36,7 @@ export interface MathLiveEditorModePluginSettings {
 	keybindings: string;
 	immediateUpdate: boolean;
 	touchKeyboardProvider: TouchKeyboardProvider;
-	mathVirtualKeyboardMode: VirtualKeyboardPolicy;
+	mathVirtualKeyboardMode: MathVirtualKeyboardMode;
 	arrowKeyNavigation: boolean;
 }
 
@@ -54,7 +55,7 @@ export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
 	keybindings: "",
 	immediateUpdate: true,
 	touchKeyboardProvider: "mathlive",
-	mathVirtualKeyboardMode: "auto", // auto, manual, sandboxed
+	mathVirtualKeyboardMode: "auto", // auto, manual, sandboxed, always
 	arrowKeyNavigation: true
 };
 
@@ -308,18 +309,20 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 					.setName("MathLive virtual keyboard mode")
 					.setDesc(multilineDesc([
 						"auto: on touch-enabled devices, show the virtual keyboard panel when the mathfield is focused.",
+						"always: show the virtual keyboard whenever the mathfield is focused or touched.",
 						"manual: only show virtual keyboard by clicking keyboard icon.",
 						"sandboxed: the virtual keyboard is displayed in the current browsing context (iframe) if it has a defined container or is the top-level browsing context.",
 					]))
 					.addDropdown((cb) => {
 						cb.addOptions({
 							"auto": "auto",
+							"always": "always",
 							"manual": "manual",
 							"sandboxed": "sandboxed",
 						});
 						cb.setValue(this.plugin.settings.mathVirtualKeyboardMode);
 						cb.onChange(async (ev) => {
-							this.plugin.settings.mathVirtualKeyboardMode = ev as VirtualKeyboardPolicy;
+							this.plugin.settings.mathVirtualKeyboardMode = ev as MathVirtualKeyboardMode;
 							await this.plugin.saveSettings();
 						});
 					});

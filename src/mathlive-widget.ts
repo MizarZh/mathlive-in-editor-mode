@@ -387,9 +387,21 @@ export class MathLiveWidget extends WidgetType {
 
 	setupTouchKeyboard(mfe: MathfieldElement) {
 		this.configureTouchKeyboard(mfe);
+		const showAlways = () => {
+			if (
+				this.settings.touchKeyboardProvider === "mathlive" &&
+				this.settings.mathVirtualKeyboardMode === "always"
+			) {
+				window.mathVirtualKeyboard?.show();
+			}
+		};
+		mfe.addEventListener("focusin", showAlways);
 		mfe.addEventListener(
 			"pointerdown",
-			() => this.configureTouchKeyboard(mfe),
+			() => {
+				this.configureTouchKeyboard(mfe);
+				showAlways();
+			},
 			{ capture: true }
 		);
 	}
@@ -404,7 +416,9 @@ export class MathLiveWidget extends WidgetType {
 		}
 
 		mfe.mathVirtualKeyboardPolicy = provider === "mathlive"
-			? this.settings.mathVirtualKeyboardMode as VirtualKeyboardPolicy
+			? this.settings.mathVirtualKeyboardMode === "always"
+				? "manual"
+				: this.settings.mathVirtualKeyboardMode as VirtualKeyboardPolicy
 			: "manual";
 
 		const showKeyboardIcon = provider === "mathlive" &&

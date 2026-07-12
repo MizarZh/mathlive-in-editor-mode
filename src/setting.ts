@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting, Notice } from "obsidian";
 import MathLiveInEditorMode from "./main";
 import { macros2newcommands } from "./utils";
+import { parse as json5parse } from "json5";
 import {
 	InlineShortcutDefinitions,
 	MacroDictionary,
@@ -11,6 +12,13 @@ import {
 export type TouchKeyboardProvider = "mathlive" | "system" | "disabled";
 export type MathVirtualKeyboardMode = VirtualKeyboardPolicy | "always";
 
+export interface ParsedMathLiveSettings {
+	macros: MacroDictionary | null;
+	inlineShortcuts: InlineShortcutDefinitions | null;
+	keybindings: Keybinding[] | null;
+	errors: Partial<Record<"macros" | "inlineShortcuts" | "keybindings", string>>;
+}
+
 export interface Global {
 	// previousMacros: string;
 	// previousInlineShortcuts: string;
@@ -18,7 +26,55 @@ export interface Global {
 	baseMacros: MacroDictionary;
 	baseShortcuts: InlineShortcutDefinitions;
 	baseKeybindings: Keybinding[];
+	parsedSettings: ParsedMathLiveSettings;
 	// forceUpdate: boolean;
+}
+
+function isKeybinding(value: unknown): value is Keybinding {
+	if (typeof value !== "object" || value === null) return false;
+	const candidate = value as Record<string, unknown>;
+	const validCommand =
+		(typeof candidate.command === "string" && candidate.command.length > 0) ||
+		(Array.isArray(candidate.command) &&
+			typeof candidate.command[0] === "string" &&
+			candidate.command[0].length > 0);
+	return typeof candidate.key === "string" &&
+		candidate.key.trim().length > 0 && validCommand;
+}
+
+export function parseMathLiveSettings(
+	settings: MathLiveEditorModePluginSettings
+): ParsedMathLiveSettings {
+	const result: ParsedMathLiveSettings = {
+		macros: null,
+		inlineShortcuts: null,
+		keybindings: null,
+		errors: {},
+	};
+
+	try {
+		result.macros = json5parse(settings.macros.trim() || "{}") as MacroDictionary;
+	} catch {
+		result.errors.macros = "Invalid JSON5 macros.";
+	}
+	try {
+		result.inlineShortcuts = json5parse(
+			settings.inlineShortcuts.trim() || "{}"
+		) as InlineShortcutDefinitions;
+	} catch {
+		result.errors.inlineShortcuts = "Invalid JSON5 inline shortcuts.";
+	}
+	try {
+		const keybindings: unknown = json5parse(settings.keybindings.trim() || "[]");
+		if (!Array.isArray(keybindings) || !keybindings.every(isKeybinding)) {
+			throw new Error();
+		}
+		result.keybindings = keybindings;
+	} catch {
+		result.errors.keybindings = "Keybindings must be a JSON5 array with valid key and command fields.";
+	}
+
+	return result;
 }
 
 export interface MathLiveEditorModePluginSettings {
@@ -101,7 +157,7 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 		if (this.plugin.settings.display) {
 			new Setting(this.containerEl).setName("Block").setHeading();
 
-			new Setting(this.containerEl)
+				new Setting(this.containerEl)
 				.setName("Display block equation")
 				.setDesc("Enable MathLive for block equation")
 				.addToggle((cb) => {
@@ -210,9 +266,9 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 
 			new Setting(this.containerEl).setName("Macros").setHeading();
 
-			new Setting(this.containerEl)
-				.setClass("obsidian-mathlive-codemirror-setting")
-				.setName("MathLive macros (Not finished yet)")
+				const macrosSetting = new Setting(this.containerEl)
+					.setClass("obsidian-mathlive-codemirror-setting")
+					.setName("MathLive macros (Not finished yet)")
 				.setDesc(
 					"Using JSON5 format, which supports single quote, trailing comma etc besides basic JSON."
 				)
@@ -233,17 +289,27 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 						"{\ncommand1: 'xxx', \ncommand2: 'xxx',\n}"
 					);
 					cb.setValue(this.plugin.settings.macros);
-					cb.onChange(async (ev) => {
+					cb.onChange((ev) => {
 						this.plugin.settings.macros = ev;
-						await this.plugin.saveSettings();
+						this.plugin.scheduleSettingsSave();
+						setValidationState(
+							macrosSetting,
+							this.plugin.global.parsedSettings.errors.macros,
+							"Using JSON5 format, which supports single quote, trailing comma etc besides basic JSON."
+						);
 					});
 				});
+			setValidationState(
+				macrosSetting,
+				this.plugin.global.parsedSettings.errors.macros,
+				"Using JSON5 format, which supports single quote, trailing comma etc besides basic JSON."
+			);
 
-			new Setting(this.containerEl)
-				.setName("Inline shortcuts")
-				.setHeading();
+				new Setting(this.containerEl)
+					.setName("Inline shortcuts")
+					.setHeading();
 
-			new Setting(this.containerEl)
+				const shortcutsSetting = new Setting(this.containerEl)
 				.setClass("obsidian-mathlive-codemirror-setting")
 				.setName("MathLive inline shortcuts")
 				.setDesc("JSON5 format")
@@ -252,15 +318,25 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 						"{\ncommand1: 'xxx', \ncommand2: 'xxx',\n}"
 					);
 					cb.setValue(this.plugin.settings.inlineShortcuts);
-					cb.onChange(async (ev) => {
+					cb.onChange((ev) => {
 						this.plugin.settings.inlineShortcuts = ev;
-						await this.plugin.saveSettings();
+						this.plugin.scheduleSettingsSave();
+						setValidationState(
+							shortcutsSetting,
+							this.plugin.global.parsedSettings.errors.inlineShortcuts,
+							"JSON5 format"
+						);
 					});
 				});
+			setValidationState(
+				shortcutsSetting,
+				this.plugin.global.parsedSettings.errors.inlineShortcuts,
+				"JSON5 format"
+			);
 
 			new Setting(this.containerEl).setName("Keybindings").setHeading();
 
-			new Setting(this.containerEl)
+			const keybindingsSetting = new Setting(this.containerEl)
 				.setClass("obsidian-mathlive-codemirror-setting")
 				.setName("MathLive keybindings")
 				.setDesc("JSON5 format")
@@ -269,11 +345,21 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 						"[\nkeybinding1: {xxx}, \nkeybinding2: {xxx},\n]"
 					);
 					cb.setValue(this.plugin.settings.keybindings);
-					cb.onChange(async (ev) => {
+					cb.onChange((ev) => {
 						this.plugin.settings.keybindings = ev;
-						await this.plugin.saveSettings();
+						this.plugin.scheduleSettingsSave();
+						setValidationState(
+							keybindingsSetting,
+							this.plugin.global.parsedSettings.errors.keybindings,
+							"JSON5 format"
+						);
 					});
 				});
+			setValidationState(
+				keybindingsSetting,
+				this.plugin.global.parsedSettings.errors.keybindings,
+				"JSON5 format"
+			);
 
 
 			new Setting(this.containerEl).setName("Keyboard Settings").setHeading();
@@ -380,4 +466,13 @@ function multilineDesc(descs: string[]) {
 	}
 	// const descEl = descFragment.createEl('b', 'u-pop');
 	return descFragment
+}
+
+function setValidationState(
+	setting: Setting,
+	error: string | undefined,
+	defaultDescription: string
+): void {
+	setting.setDesc(error ?? defaultDescription);
+	setting.settingEl.classList.toggle("is-invalid", error !== undefined);
 }

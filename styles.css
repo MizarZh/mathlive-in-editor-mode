@@ -10,6 +10,16 @@
 	resize: vertical;
 }
 
+.obsidian-mathlive-codemirror-setting.is-invalid textarea {
+	border-color: var(--text-error);
+	box-shadow: 0 0 0 1px var(--text-error);
+}
+
+.obsidian-mathlive-codemirror-setting.is-invalid textarea:focus {
+	border-color: var(--text-error);
+	box-shadow: 0 0 0 2px var(--text-error);
+}
+
 .theme-dark {
 	--caret-color: #ddd;
 	--contains-highlight-background-color: #767676;

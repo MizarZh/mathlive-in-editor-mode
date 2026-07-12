@@ -8,27 +8,10 @@ import {
 	VirtualKeyboardPolicy,
 } from "mathlive";
 import { MathLiveEditorModePluginSettings, Global } from "./setting";
-import { parse as json5parse } from "json5";
-import { Notice } from "obsidian";
 import { getMathNavigationPositions } from "./math-boundaries";
 interface WidgetConfig {
 	from: number;
 	to: number;
-}
-
-function isKeybinding(value: unknown): value is Keybinding {
-	if (typeof value !== "object" || value === null) return false;
-
-	const candidate = value as Record<string, unknown>;
-	const validCommand =
-		(typeof candidate.command === "string" && candidate.command.length > 0) ||
-		(Array.isArray(candidate.command) &&
-			typeof candidate.command[0] === "string" &&
-			candidate.command[0].length > 0);
-
-	return typeof candidate.key === "string" &&
-		candidate.key.trim().length > 0 &&
-		validCommand;
 }
 
 export class MathLiveWidget extends WidgetType {
@@ -210,75 +193,48 @@ export class MathLiveWidget extends WidgetType {
 		return div;
 	}
 	private applyMathLiveSettings(mfe: MathfieldElement): void {
-		try {
-			if (mfe.dataset.macros !== this.settings.macros) {
-				// If baseMacros is not initialized yet, get it from mfe first
-				if (Object.keys(this.global.baseMacros).length === 0) {
-					this.global.baseMacros = mfe.macros as MacroDictionary;
-				}
-				let macros = this.settings.macros;
-				if (this.settings.macros.trim() === "") {
-					macros = "{}";
-				}
-				const macrosJSON = json5parse(macros) as MacroDictionary;
-				mfe.macros = { ...this.global.baseMacros, ...macrosJSON };
-				mfe.dataset.macros = this.settings.macros;
+		const parsed = this.global.parsedSettings;
+		if (
+			mfe.dataset.macros !== this.settings.macros &&
+			parsed.macros !== null
+		) {
+			// If baseMacros is not initialized yet, get it from mfe first
+			if (Object.keys(this.global.baseMacros).length === 0) {
+				this.global.baseMacros = mfe.macros as MacroDictionary;
 			}
-		} catch (e) {
-			new Notice("MathLive: Incorrect macro settings.");
-			console.error(e);
+			mfe.macros = { ...this.global.baseMacros, ...parsed.macros };
+			mfe.dataset.macros = this.settings.macros;
 		}
 
-		try {
-			if (mfe.dataset.shortcuts !== this.settings.inlineShortcuts) {
-				// If baseShortcuts is not initialized yet, get it from mfe first
-				if (Object.keys(this.global.baseShortcuts).length === 0) {
-					this.global.baseShortcuts =
-						mfe.inlineShortcuts as InlineShortcutDefinitions;
-				}
-				let shortcuts = this.settings.inlineShortcuts;
-				if (this.settings.inlineShortcuts.trim() === "") {
-					shortcuts = "{}";
-				}
-				const shortcutsJSON = json5parse(
-					shortcuts
-				) as InlineShortcutDefinitions;
-				mfe.inlineShortcuts = {
-					...this.global.baseShortcuts,
-					...shortcutsJSON,
-				};
-				mfe.dataset.shortcuts = this.settings.inlineShortcuts;
+		if (
+			mfe.dataset.shortcuts !== this.settings.inlineShortcuts &&
+			parsed.inlineShortcuts !== null
+		) {
+			// If baseShortcuts is not initialized yet, get it from mfe first
+			if (Object.keys(this.global.baseShortcuts).length === 0) {
+				this.global.baseShortcuts =
+					mfe.inlineShortcuts as InlineShortcutDefinitions;
 			}
-		} catch (e) {
-			new Notice("MathLive: Incorrect inline shortcut settings.");
-			console.error(e);
+			mfe.inlineShortcuts = {
+				...this.global.baseShortcuts,
+				...parsed.inlineShortcuts,
+			};
+			mfe.dataset.shortcuts = this.settings.inlineShortcuts;
 		}
 
-		try {
-			if (mfe.dataset.keybindings !== this.settings.keybindings) {
-				// If baseKeybindings is not initialized yet, get it from mfe first
-				if (this.global.baseKeybindings.length === 0) {
-					this.global.baseKeybindings = [...mfe.keybindings] as Keybinding[];
-				}
-				let customKeybindings: unknown = [];
-				if (this.settings.keybindings.trim() !== "") {
-					customKeybindings = json5parse(this.settings.keybindings);
-				}
-				if (
-					!Array.isArray(customKeybindings) ||
-					!customKeybindings.every(isKeybinding)
-				) {
-					throw new Error("Keybindings must be an array of valid keybinding objects.");
-				}
-				mfe.keybindings = [
-					...this.global.baseKeybindings,
-					...customKeybindings,
-				];
-				mfe.dataset.keybindings = this.settings.keybindings;
+		if (
+			mfe.dataset.keybindings !== this.settings.keybindings &&
+			parsed.keybindings !== null
+		) {
+			// If baseKeybindings is not initialized yet, get it from mfe first
+			if (this.global.baseKeybindings.length === 0) {
+				this.global.baseKeybindings = [...mfe.keybindings] as Keybinding[];
 			}
-		} catch (e) {
-			new Notice("MathLive: Incorrect keybinding settings.");
-			console.error(e);
+			mfe.keybindings = [
+				...this.global.baseKeybindings,
+				...parsed.keybindings,
+			];
+			mfe.dataset.keybindings = this.settings.keybindings;
 		}
 	}
 

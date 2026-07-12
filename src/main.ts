@@ -7,11 +7,13 @@ import {
 	DEFAULT_SETTINGS,
 	MathLiveEditorModeSettingsTab,
 	Global,
+	parseMathLiveSettings,
 } from "./setting";
 
 export default class MathLiveInEditorMode extends Plugin {
 	settings: MathLiveEditorModePluginSettings;
 	global: Global;
+	private settingsSaveTimeout: number | null = null;
 
 	async onload() {
 		// mobile mode testing
@@ -30,6 +32,7 @@ export default class MathLiveInEditorMode extends Plugin {
 			baseMacros: {},
 			baseShortcuts: {},
 			baseKeybindings: [],
+			parsedSettings: parseMathLiveSettings(this.settings),
 			// forceUpdate: false,
 		};
 
@@ -57,6 +60,11 @@ export default class MathLiveInEditorMode extends Plugin {
 	}
 
 	onunload() {
+		if (this.settingsSaveTimeout !== null) {
+			window.clearTimeout(this.settingsSaveTimeout);
+			this.settingsSaveTimeout = null;
+			void this.saveData(this.settings);
+		}
 		disposeMathLiveWidgetResources();
 		document.body.removeClass("mathlive-hide-mathjax-block");
 		document.body.removeClass("mathlive-hide-mathjax-inline");
@@ -71,10 +79,33 @@ export default class MathLiveInEditorMode extends Plugin {
 	}
 
 	async saveSettings() {
+		this.updateParsedSettings();
 		await this.saveData(this.settings);
 		refreshMathLiveEditors();
 		// Update MathJax visibility when settings change
 		this.updateMathJaxVisibility();
+	}
+
+	scheduleSettingsSave(delay = 600): void {
+		this.updateParsedSettings();
+		if (this.settingsSaveTimeout !== null) {
+			window.clearTimeout(this.settingsSaveTimeout);
+		}
+		this.settingsSaveTimeout = window.setTimeout(() => {
+			this.settingsSaveTimeout = null;
+			void this.saveSettings();
+		}, delay);
+	}
+
+	private updateParsedSettings(): void {
+		const previous = this.global.parsedSettings;
+		const parsed = parseMathLiveSettings(this.settings);
+		if (parsed.macros === null) parsed.macros = previous.macros;
+		if (parsed.inlineShortcuts === null) {
+			parsed.inlineShortcuts = previous.inlineShortcuts;
+		}
+		if (parsed.keybindings === null) parsed.keybindings = previous.keybindings;
+		this.global.parsedSettings = parsed;
 	}
 
 	updateMathJaxVisibility(onlyRemove: boolean = false) {

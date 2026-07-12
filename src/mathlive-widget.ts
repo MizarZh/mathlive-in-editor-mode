@@ -70,17 +70,7 @@ export class MathLiveWidget extends WidgetType {
 
 		// have to put them in setTimeout, mfe is somehow not initialized
 		setTimeout(() => {
-			// Save base defaults if not already saved
-			if (Object.keys(this.global.baseMacros).length === 0) {
-				this.global.baseMacros = mfe.macros as MacroDictionary;
-			}
-			if (Object.keys(this.global.baseShortcuts).length === 0) {
-				this.global.baseShortcuts =
-					mfe.inlineShortcuts as InlineShortcutDefinitions;
-			}
-			if (this.global.baseKeybindings.length === 0) {
-				this.global.baseKeybindings = mfe.keybindings as Keybinding[];
-			}
+			this.applyMathLiveSettings(mfe);
 			this.configureTouchKeyboard(mfe);
 
 			// Setup keyboard close button injection
@@ -233,12 +223,7 @@ export class MathLiveWidget extends WidgetType {
 
 		return div;
 	}
-	updateDOM(dom: HTMLElement, view: EditorView): boolean {
-		// editor -> mfe
-		const mfe = dom.getElementsByTagName(
-			"math-field"
-		)[0] as MathfieldElement;
-
+	private applyMathLiveSettings(mfe: MathfieldElement): void {
 		try {
 			if (mfe.dataset.macros !== this.settings.macros) {
 				// If baseMacros is not initialized yet, get it from mfe first
@@ -309,7 +294,15 @@ export class MathLiveWidget extends WidgetType {
 			new Notice("MathLive: Incorrect keybinding settings.");
 			console.error(e);
 		}
+	}
 
+	updateDOM(dom: HTMLElement, view: EditorView): boolean {
+		// editor -> mfe
+		const mfe = dom.getElementsByTagName(
+			"math-field"
+		)[0] as MathfieldElement;
+
+		this.applyMathLiveSettings(mfe);
 		this.configureTouchKeyboard(mfe);
 
 		this.style(mfe, dom as HTMLDivElement);

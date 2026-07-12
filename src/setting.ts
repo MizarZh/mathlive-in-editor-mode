@@ -37,6 +37,7 @@ export interface MathLiveEditorModePluginSettings {
 	immediateUpdate: boolean;
 	touchKeyboardProvider: TouchKeyboardProvider;
 	mathVirtualKeyboardMode: MathVirtualKeyboardMode;
+	hideMathVirtualKeyboardOnBlur: boolean;
 	arrowKeyNavigation: boolean;
 }
 
@@ -56,6 +57,7 @@ export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
 	immediateUpdate: true,
 	touchKeyboardProvider: "mathlive",
 	mathVirtualKeyboardMode: "auto", // auto, manual, sandboxed, always
+	hideMathVirtualKeyboardOnBlur: false,
 	arrowKeyNavigation: true
 };
 
@@ -323,6 +325,17 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 						cb.setValue(this.plugin.settings.mathVirtualKeyboardMode);
 						cb.onChange(async (ev) => {
 							this.plugin.settings.mathVirtualKeyboardMode = ev as MathVirtualKeyboardMode;
+							await this.plugin.saveSettings();
+						});
+					});
+
+				new Setting(this.containerEl)
+					.setName("Hide MathLive keyboard when leaving field")
+					.setDesc("Hide the virtual keyboard after focus moves outside MathLive fields and keyboard controls.")
+					.addToggle((cb) => {
+						cb.setValue(this.plugin.settings.hideMathVirtualKeyboardOnBlur);
+						cb.onChange(async (ev) => {
+							this.plugin.settings.hideMathVirtualKeyboardOnBlur = ev;
 							await this.plugin.saveSettings();
 						});
 					});

@@ -396,6 +396,31 @@ export class MathLiveWidget extends WidgetType {
 			}
 		};
 		mfe.addEventListener("focusin", showAlways);
+		mfe.addEventListener("focusout", (event) => {
+			if (
+				!this.settings.hideMathVirtualKeyboardOnBlur ||
+				this.settings.touchKeyboardProvider !== "mathlive"
+			) {
+				return;
+			}
+
+			const nextTarget = event.relatedTarget;
+			if (
+				nextTarget instanceof Element &&
+				(nextTarget.closest("math-field") || nextTarget.closest(".ML__keyboard"))
+			) {
+				return;
+			}
+
+			requestAnimationFrame(() => {
+				const activeElement = document.activeElement;
+				const keyboardFocused = activeElement instanceof Element &&
+					activeElement.closest(".ML__keyboard");
+				if (!document.querySelector("math-field:focus-within") && !keyboardFocused) {
+					window.mathVirtualKeyboard?.hide();
+				}
+			});
+		});
 		mfe.addEventListener(
 			"pointerdown",
 			() => {

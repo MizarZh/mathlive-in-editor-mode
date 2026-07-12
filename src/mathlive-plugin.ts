@@ -11,6 +11,7 @@ import {
 } from "@codemirror/state";
 import { Decoration, DecorationSet, EditorView, keymap, type KeyBinding } from "@codemirror/view";
 import { MathLiveWidget } from "./mathlive-widget";
+import { getMathNavigationPositions } from "./math-boundaries";
 import { MathLiveEditorModePluginSettings, Global } from "./setting";
 import type { MathfieldElement } from "mathlive";
 
@@ -85,13 +86,13 @@ function enterMathLiveOnArrow(
 		keymap.of([
 			arrowEnterBinding(
 				"ArrowRight",
-				(e, head) => head === (e.isInline ? e.from - 1 : e.to + 2),
+				(e, head, doc) => head === getMathNavigationPositions(doc, e).backwardBoundary,
 				true,
 				settings
 			),
 			arrowEnterBinding(
 				"ArrowLeft",
-				(e, head) => head === (e.isInline ? e.from : e.to + 3),
+				(e, head, doc) => head === getMathNavigationPositions(doc, e).forwardBoundary,
 				false,
 				settings
 			),
@@ -138,16 +139,15 @@ function enterMathLiveOnArrow(
 					/**
 					 * Map a MathLive widget back to its "owning" source line number.
 					 *
-					 * For block math, the widget is added at `end + 2` (right after the closing `$$`),
-					 * so `e.to + 2` lands on the closing delimiter line. Using `lineAt` gives us the
-					 * logical line number in the CM document that corresponds to the `$$...$$` line.
+					 * The shared boundary helper returns the position owned by the closing
+					 * delimiter line. Using `lineAt` maps it to the source line for `$$...$$`.
 					 *
 					 * This is the anchor we use to:
 					 * - decide whether the cursor is currently "on a formula line"
 					 * - detect "skipping" a folded formula line when moving down
 					 */
 					const owningLine = (e: MathFieldEntry) =>
-						doc.lineAt(Math.min(e.to + 2, doc.length)).number;
+						doc.lineAt(getMathNavigationPositions(doc, e).owningPosition).number;
 
 					/**
 					 * Return the block-math widget whose owning source line is `lineNo`, if any.
@@ -232,7 +232,8 @@ function enterMathLiveOnArrow(
 				"ArrowUp",
 				(e, head, doc) => {
 					if (e.isInline) return false;
-					return doc.lineAt(head).number === doc.lineAt(Math.min(e.to + 3, doc.length)).number;
+					const positions = getMathNavigationPositions(doc, e);
+					return doc.lineAt(head).number === doc.lineAt(positions.forwardBoundary).number;
 				},
 				false,
 				settings
@@ -270,9 +271,14 @@ export const mathliveListFieldWrapper = (
 
 						if (!isInline) {
 							// block
+							const position = getMathNavigationPositions(state.doc, {
+								from: begin,
+								to: end,
+								isInline,
+							}).decorationPosition;
 							builder.add(
-								end + 2,
-								end + 2,
+								position,
+								position,
 								Decoration.widget({
 									widget: new MathLiveWidget(
 										{ from: begin, to: end },
@@ -285,25 +291,27 @@ export const mathliveListFieldWrapper = (
 									side: 10,
 								})
 							);
-						} else {
-							if (settings.inlineDisplay)
-								// inline
-								builder.add(
-									// end + 1,
-									// end + 1,
-									begin - 1,
-									begin - 1,
-									Decoration.widget({
-										widget: new MathLiveWidget(
-											{ from: begin, to: end },
-											mathContent,
-											settings,
-											isInline,
-											global
-										),
-										side: 1,
-									})
-								);
+						} else if (settings.inlineDisplay) {
+							// inline
+							const position = getMathNavigationPositions(state.doc, {
+								from: begin,
+								to: end,
+								isInline,
+							}).decorationPosition;
+							builder.add(
+								position,
+								position,
+								Decoration.widget({
+									widget: new MathLiveWidget(
+										{ from: begin, to: end },
+										mathContent,
+										settings,
+										isInline,
+										global
+									),
+									side: 1,
+								})
+							);
 						}
 
 						begin = end = -1;

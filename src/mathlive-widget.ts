@@ -10,6 +10,7 @@ import {
 import { MathLiveEditorModePluginSettings, Global } from "./setting";
 import { parse as json5parse } from "json5";
 import { Notice } from "obsidian";
+import { getMathNavigationPositions } from "./math-boundaries";
 interface WidgetConfig {
 	from: number;
 	to: number;
@@ -167,20 +168,24 @@ export class MathLiveWidget extends WidgetType {
 			// Use current range from dataset (updated by dispatchChange when LaTeX changes)
 			const from = parseInt(mfe.dataset.from ?? String(this.config.from), 10);
 			const to = parseInt(mfe.dataset.to ?? String(this.config.to), 10);
-			const posBefore = this.isInline ? from - 1 : to;
-			const posAfter = this.isInline ? from : to + 3;
+			if (Number.isNaN(from) || Number.isNaN(to)) return;
+			const positions = getMathNavigationPositions(view.state.doc, {
+				from,
+				to,
+				isInline: this.isInline,
+			});
 			const atStart = mfe.position === 0;
 			const atEnd = mfe.position === mfe.lastOffset;
 			if (ev.key === "ArrowLeft" && atStart) {
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(posBefore);
+				exitToEditor(positions.backwardBoundary);
 				return;
 			}
 			if (ev.key === "ArrowRight" && atEnd) {
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(posAfter);
+				exitToEditor(positions.forwardBoundary);
 				return;
 			}
 
@@ -189,33 +194,15 @@ export class MathLiveWidget extends WidgetType {
 			const atOutermost = info?.depth === 0;
 			// Use visual lines (wrapped) instead of document lines
 			if (ev.key === "ArrowUp" && atOutermost) {
-				// const block = view.lineBlockAt(to + 2);
-				// block.top starting from the same line as math-field and last $$ symbol
-				// if (block.top > 0) {
-				// 	const prevBlock = view.lineBlockAtHeight(block.top + 0.1);
-				// 	ev.preventDefault();
-				// 	ev.stopPropagation();
-				// 	exitToEditor(prevBlock.to);
-				// 	return;
-				// }
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(posBefore);
+				exitToEditor(positions.backwardBoundary);
 				return;
 			}
 			if (ev.key === "ArrowDown" && atOutermost) {
-				// const block = view.lineBlockAt(to + 3);
-				// if (block.bottom < view.contentHeight - 1) {
-				// 	console.log(block.bottom)
-				// 	const nextBlock = view.lineBlockAtHeight(block.bottom);
-				// 	ev.preventDefault();
-				// 	ev.stopPropagation();
-				// 	exitToEditor(nextBlock.from);
-				// 	return;
-				// }
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(posAfter);
+				exitToEditor(positions.forwardBoundary);
 				return;
 			}
 

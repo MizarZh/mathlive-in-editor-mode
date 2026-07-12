@@ -8,6 +8,8 @@ import {
 	VirtualKeyboardPolicy,
 } from "mathlive";
 
+export type TouchKeyboardProvider = "mathlive" | "system" | "disabled";
+
 export interface Global {
 	// previousMacros: string;
 	// previousInlineShortcuts: string;
@@ -32,6 +34,7 @@ export interface MathLiveEditorModePluginSettings {
 	inlineShortcuts: string;
 	keybindings: string;
 	immediateUpdate: boolean;
+	touchKeyboardProvider: TouchKeyboardProvider;
 	mathVirtualKeyboardMode: VirtualKeyboardPolicy;
 	arrowKeyNavigation: boolean;
 }
@@ -50,6 +53,7 @@ export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
 	inlineShortcuts: "",
 	keybindings: "",
 	immediateUpdate: true,
+	touchKeyboardProvider: "mathlive",
 	mathVirtualKeyboardMode: "auto", // auto, manual, sandboxed
 	arrowKeyNavigation: true
 };
@@ -283,24 +287,43 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 				});
 
 			new Setting(this.containerEl)
-				.setName("MathLive virtual keyboard mode")
-				.setDesc(multilineDesc([
-					"auto: on touch-enabled devices, show the virtual keyboard panel when the mathfield is focused.",
-					"manual: only show virtual keyboard by clicking keyboard icon.",
-					"sandboxed: the virtual keyboard is displayed in the current browsing context (iframe) if it has a defined container or is the top-level browsing context.",
-				]))
+				.setName("Touch keyboard")
+				.setDesc("Choose which keyboard opens when a MathLive field is touched.")
 				.addDropdown((cb) => {
 					cb.addOptions({
-						"auto": "auto",
-						"manual": "manual",
-						"sandboxed": "sandboxed",
+						"mathlive": "MathLive",
+						"system": "System (experimental)",
+						"disabled": "Disabled",
 					});
-					cb.setValue(this.plugin.settings.mathVirtualKeyboardMode);
+					cb.setValue(this.plugin.settings.touchKeyboardProvider);
 					cb.onChange(async (ev) => {
-						this.plugin.settings.mathVirtualKeyboardMode = ev as VirtualKeyboardPolicy;
+						this.plugin.settings.touchKeyboardProvider = ev as TouchKeyboardProvider;
 						await this.plugin.saveSettings();
+						this.display();
 					});
 				});
+
+			if (this.plugin.settings.touchKeyboardProvider === "mathlive") {
+				new Setting(this.containerEl)
+					.setName("MathLive virtual keyboard mode")
+					.setDesc(multilineDesc([
+						"auto: on touch-enabled devices, show the virtual keyboard panel when the mathfield is focused.",
+						"manual: only show virtual keyboard by clicking keyboard icon.",
+						"sandboxed: the virtual keyboard is displayed in the current browsing context (iframe) if it has a defined container or is the top-level browsing context.",
+					]))
+					.addDropdown((cb) => {
+						cb.addOptions({
+							"auto": "auto",
+							"manual": "manual",
+							"sandboxed": "sandboxed",
+						});
+						cb.setValue(this.plugin.settings.mathVirtualKeyboardMode);
+						cb.onChange(async (ev) => {
+							this.plugin.settings.mathVirtualKeyboardMode = ev as VirtualKeyboardPolicy;
+							await this.plugin.saveSettings();
+						});
+					});
+			}
 
 			new Setting(this.containerEl)
 				.setName("Arrow key navigation between MathLive and editor")

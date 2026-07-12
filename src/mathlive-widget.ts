@@ -50,6 +50,8 @@ export class MathLiveWidget extends WidgetType {
 		mfe.setValue(this.equation);
 		mfe.dataset.from = `${this.config.from}`;
 		mfe.dataset.to = `${this.config.to}`;
+		this.setupBackslashCommandInput(mfe);
+		this.setupTouchKeyboard(mfe);
 
 		// have to put them in setTimeout, mfe is somehow not initialized
 		setTimeout(() => {
@@ -64,7 +66,7 @@ export class MathLiveWidget extends WidgetType {
 			if (this.global.baseKeybindings.length === 0) {
 				this.global.baseKeybindings = mfe.keybindings as Keybinding[];
 			}
-			mfe.mathVirtualKeyboardPolicy = this.settings.mathVirtualKeyboardMode as VirtualKeyboardPolicy;
+			this.configureTouchKeyboard(mfe);
 
 			// Setup keyboard close button injection
 			this.setupKeyboardCollapseButton(mfe);
@@ -277,7 +279,7 @@ export class MathLiveWidget extends WidgetType {
 			console.error(e);
 		}
 
-		mfe.mathVirtualKeyboardPolicy = this.settings.mathVirtualKeyboardMode as VirtualKeyboardPolicy;
+		this.configureTouchKeyboard(mfe);
 
 		this.style(mfe, dom as HTMLDivElement);
 
@@ -310,7 +312,8 @@ export class MathLiveWidget extends WidgetType {
 				div.addClass("inline");
 				this.changeCSSClass(this.settings.inlineDisplay, div, "hidden");
 				this.changeCSSClass(
-					this.settings.inlineKeyboardIcon,
+					this.settings.touchKeyboardProvider === "mathlive" &&
+						this.settings.inlineKeyboardIcon,
 					mfe,
 					"hide-keyboard"
 				);
@@ -324,7 +327,8 @@ export class MathLiveWidget extends WidgetType {
 				div.removeClass("inline");
 				this.changeCSSClass(this.settings.blockDisplay, div, "hidden");
 				this.changeCSSClass(
-					this.settings.blockKeyboardIcon,
+					this.settings.touchKeyboardProvider === "mathlive" &&
+						this.settings.blockKeyboardIcon,
 					mfe,
 					"hide-keyboard"
 				);
@@ -344,6 +348,73 @@ export class MathLiveWidget extends WidgetType {
 			elem.removeClass(className);
 		} else {
 			elem.addClass(className);
+		}
+	}
+
+	setupBackslashCommandInput(mfe: MathfieldElement) {
+		const root = mfe.shadowRoot;
+		if (!root) return;
+
+		root.addEventListener(
+			"beforeinput",
+			(event) => {
+				const inputEvent = event as InputEvent;
+				if (
+					!inputEvent.cancelable ||
+					inputEvent.isComposing ||
+					inputEvent.inputType !== "insertText" ||
+					inputEvent.data !== "\\" ||
+					mfe.mode !== "math"
+				) {
+					return;
+				}
+
+				inputEvent.preventDefault();
+				inputEvent.stopImmediatePropagation();
+				mfe.executeCommand([
+					"typedText",
+					"\\",
+					{
+						focus: true,
+						feedback: false,
+						simulateKeystroke: true,
+					},
+				]);
+			},
+			{ capture: true }
+		);
+	}
+
+	setupTouchKeyboard(mfe: MathfieldElement) {
+		this.configureTouchKeyboard(mfe);
+		mfe.addEventListener(
+			"pointerdown",
+			() => this.configureTouchKeyboard(mfe),
+			{ capture: true }
+		);
+	}
+
+	configureTouchKeyboard(mfe: MathfieldElement) {
+		const provider = this.settings.touchKeyboardProvider;
+		const sink = mfe.shadowRoot?.querySelector<HTMLElement>(
+			'[part="keyboard-sink"]'
+		);
+		if (sink) {
+			sink.setAttribute("inputmode", provider === "system" ? "text" : "none");
+		}
+
+		mfe.mathVirtualKeyboardPolicy = provider === "mathlive"
+			? this.settings.mathVirtualKeyboardMode as VirtualKeyboardPolicy
+			: "manual";
+
+		const showKeyboardIcon = provider === "mathlive" &&
+			(this.isInline
+				? this.settings.inlineKeyboardIcon
+				: this.settings.blockKeyboardIcon);
+		this.changeCSSClass(showKeyboardIcon, mfe, "hide-keyboard");
+
+		if (provider !== "mathlive") {
+			window.mathVirtualKeyboard?.hide();
 		}
 	}
 

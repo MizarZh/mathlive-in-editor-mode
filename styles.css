@@ -79,32 +79,6 @@ math-field.hide-menu::part(menu-toggle) {
 	display: none;
 }
 
-.obsidian-mathlive-keyboard-collapse {
-	position: fixed;
-	z-index: 10001;
-	display: grid;
-	place-items: center;
-	width: 36px;
-	height: 36px;
-	padding: 0;
-	color: var(--text-muted);
-	background: var(--background-secondary);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
-	box-shadow: var(--shadow-s);
-	cursor: pointer;
-}
-
-.obsidian-mathlive-keyboard-collapse:hover {
-	color: var(--text-normal);
-	background: var(--background-modifier-hover);
-}
-
-.obsidian-mathlive-keyboard-collapse svg {
-	width: 20px;
-	height: 20px;
-}
-
 /* 0.98.6 */
 :root {
 	--ML__static-fonts: true;

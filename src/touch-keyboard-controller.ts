@@ -106,5 +106,6 @@ export function setupKeyboardCollapseButton(mfe: MathfieldElement): void {
 	const manager = KeyboardCollapseButtonManager.getInstance(mfe.ownerDocument);
 	const ensureButton = () => manager.ensureButton();
 	mfe.addEventListener("focus", ensureButton);
-	mfe.addEventListener("click", ensureButton);
+	mfe.addEventListener("pointerdown", ensureButton, { capture: true });
+	if (mfe.matches(":focus-within")) ensureButton();
 }

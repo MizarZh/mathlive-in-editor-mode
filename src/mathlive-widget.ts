@@ -91,7 +91,7 @@ export class MathLiveWidget extends WidgetType {
 			applyMathLiveSettings(mfe, this.settings, this.global);
 			configureTouchKeyboard(mfe, this.settings, this.isInline);
 
-			// Setup the plugin-owned keyboard collapse overlay.
+			// Add the collapse action to the MathLive keyboard toolbar.
 			setupKeyboardCollapseButton(mfe);
 		}, 0);
 

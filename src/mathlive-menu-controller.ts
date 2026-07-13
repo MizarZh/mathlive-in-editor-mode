@@ -5,9 +5,7 @@ type MenuCleanup = () => void;
 interface DocumentMenuState {
 	fields: Set<MathfieldElement>;
 	lastMathfield: MathfieldElement | null;
-	pendingClickMathfield: MathfieldElement | null;
 	onPointerDown: EventListener;
-	onClick: EventListener;
 }
 
 const documentMenuStates = new WeakMap<Document, DocumentMenuState>();
@@ -46,15 +44,19 @@ function getPathMathfield(
 }
 
 function isInsideMenu(event: Event, menus: HTMLElement[]): boolean {
+	if ("clientX" in event && "clientY" in event) {
+		const { clientX, clientY } = event as PointerEvent;
+		return menus.some((menu) => {
+			const bounds = menu.getBoundingClientRect();
+			return clientX >= bounds.left && clientX <= bounds.right &&
+				clientY >= bounds.top && clientY <= bounds.bottom;
+		});
+	}
+
+	// Top-layer popovers can place the menu in an unrelated composed path.
+	// Pointer coordinates are authoritative; this fallback serves non-pointer events.
 	const path = event.composedPath();
-	if (menus.some((menu) => path.includes(menu))) return true;
-	if (!("clientX" in event) || !("clientY" in event)) return false;
-	const { clientX, clientY } = event as MouseEvent;
-	return menus.some((menu) => {
-		const bounds = menu.getBoundingClientRect();
-		return clientX >= bounds.left && clientX <= bounds.right &&
-			clientY >= bounds.top && clientY <= bounds.bottom;
-	});
+	return menus.some((menu) => path.includes(menu));
 }
 
 export function dismissOpenMathLiveMenu(mfe: MathfieldElement): boolean {
@@ -62,17 +64,25 @@ export function dismissOpenMathLiveMenu(mfe: MathfieldElement): boolean {
 	if (!menu) return false;
 	const scrim = menu.parentElement;
 	if (!scrim) return false;
+	const MouseEventConstructor =
+		scrim.ownerDocument.defaultView?.MouseEvent ?? MouseEvent;
+	// Use MathLive's light-dismiss path so menu, scrim, focus, and state close together.
+	scrim.dispatchEvent(new MouseEventConstructor("click", {
+		bubbles: false,
+		cancelable: true,
+		composed: false,
+	}));
+	if (menu.parentElement === null) return true;
+
 	const KeyboardEventConstructor =
 		scrim.ownerDocument.defaultView?.KeyboardEvent ?? KeyboardEvent;
-	// A top-layer menu does not reliably bubble its synthetic Escape to the scrim.
-	// Keep it local so the math-field Escape handler does not undo current edits.
+	// Fallback for a scrim whose light-dismiss state is already inconsistent.
 	scrim.dispatchEvent(new KeyboardEventConstructor("keydown", {
 		key: "Escape",
 		bubbles: false,
 		cancelable: true,
 		composed: false,
 	}));
-	// toggleContextMenu() can reopen a menu whose state is not exactly "open".
 	return menu.parentElement === null;
 }
 
@@ -84,24 +94,20 @@ function handleDocumentPointerDown(
 	const path = event.composedPath();
 	const pathMathfield = getPathMathfield(path, state.fields);
 	const activeMathfield = getActiveMathfield(ownerDocument, state.fields);
-	state.pendingClickMathfield = [
+	const mfe = [
 		pathMathfield,
 		activeMathfield,
 		state.lastMathfield,
 	].find((mfe) => mfe && getOpenMenus(mfe).length > 0) ?? null;
 	if (pathMathfield) state.lastMathfield = pathMathfield;
-}
-
-function handleDocumentClick(event: Event, state: DocumentMenuState): void {
-	const mfe = state.pendingClickMathfield;
-	state.pendingClickMathfield = null;
 	if (!mfe || !state.fields.has(mfe)) return;
 	const menus = getOpenMenus(mfe);
 	if (menus.length === 0 || isInsideMenu(event, menus)) return;
-	// Menu item click handlers finish before this document-level fallback.
-	queueMicrotask(() => {
-		if (state.fields.has(mfe)) dismissOpenMathLiveMenu(mfe);
-	});
+	// The scrim is nested inside MathLive's menu toggle. Stop this pointerdown
+	// before removing the scrim, or it continues to the toggle and reopens the menu.
+	if (event.cancelable) event.preventDefault();
+	event.stopPropagation();
+	dismissOpenMathLiveMenu(mfe);
 }
 
 function getDocumentMenuState(ownerDocument: Document): DocumentMenuState {
@@ -112,16 +118,11 @@ function getDocumentMenuState(ownerDocument: Document): DocumentMenuState {
 	const state: DocumentMenuState = {
 		fields,
 		lastMathfield: null,
-		pendingClickMathfield: null,
 		onPointerDown: (event) => {
 			handleDocumentPointerDown(event, ownerDocument, state);
 		},
-		onClick: (event) => {
-			handleDocumentClick(event, state);
-		},
 	};
 	ownerDocument.addEventListener("pointerdown", state.onPointerDown, true);
-	ownerDocument.addEventListener("click", state.onClick);
 	documentMenuStates.set(ownerDocument, state);
 	return state;
 }
@@ -141,10 +142,8 @@ export function setupMathLiveMenuDismissal(mfe: MathfieldElement): void {
 		menuCleanups.delete(mfe);
 		state.fields.delete(mfe);
 		if (state.lastMathfield === mfe) state.lastMathfield = null;
-		if (state.pendingClickMathfield === mfe) state.pendingClickMathfield = null;
 		if (state.fields.size > 0) return;
 		ownerDocument.removeEventListener("pointerdown", state.onPointerDown, true);
-		ownerDocument.removeEventListener("click", state.onClick);
 		documentMenuStates.delete(ownerDocument);
 	};
 	menuCleanups.set(mfe, cleanup);

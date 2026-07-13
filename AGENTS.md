@@ -75,7 +75,7 @@ The build entry point is `src/main.ts`, and output is written to `main.js`. Ther
 
 Only classify a member as non-public here when it is absent from the corresponding public API declarations. HTML structure, CSS selectors, DOM queries/mutations, and shadow-DOM access may be fragile, but are not non-public methods under this definition.
 
-- `src/mathlive-input-sync.ts` mutates private CodeMirror property `EditorView.inputState.composing`. Public CodeMirror only exposes read-only `EditorView.composing`. Keep feature detection, preserve the prior numeric value, and restore it in `finally`. Never leave CodeMirror in composing state.
+- For right-side inline widgets and block widgets whose following cursor shares the decoration position, `src/mathlive-input-sync.ts` mutates private CodeMirror property `EditorView.inputState.composing` for the MathLive focus lifetime and around source transactions. Public CodeMirror only exposes read-only `EditorView.composing`. Keep feature detection, preserve both prior numeric values, restore on blur and in transaction `finally`, and never leave CodeMirror in composing state.
 - `src/setting.ts` uses Obsidian settings internals `app.setting`, `openTabById()`, `activeTab`, `activeTab.headerComponent.components`, and `activeTab.updateHotkeyVisibility()`. None are in the official Obsidian API. Keep failures isolated to the Set hotkey convenience action.
 
 No non-public MathLive method is currently used. `window.mathVirtualKeyboard`, Mathfield APIs, Obsidian `renderMath()`/`finishRenderMath()`, and Obsidian's declared global DOM/string helpers are public for this classification. The commented `app.emulateMobile()` example is not runtime usage.

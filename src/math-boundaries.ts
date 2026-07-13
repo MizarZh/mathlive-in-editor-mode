@@ -11,6 +11,7 @@ export interface MathNavigationPositions {
 	backwardBoundary: number;
 	forwardBoundary: number;
 	decorationPosition: number;
+	decorationSide: number;
 	owningPosition: number;
 }
 
@@ -31,6 +32,7 @@ export function getMathNavigationPositions(
 				backwardBoundary: openingDelimiter,
 				forwardBoundary: afterWidget,
 				decorationPosition: openingDelimiter,
+				decorationSide: 1,
 				owningPosition: openingDelimiter,
 			};
 		}
@@ -40,6 +42,7 @@ export function getMathNavigationPositions(
 			backwardBoundary: beforeClosingDelimiter,
 			forwardBoundary: afterClosingDelimiter,
 			decorationPosition: afterClosingDelimiter,
+			decorationSide: -1,
 			owningPosition: afterClosingDelimiter,
 		};
 	}
@@ -50,11 +53,15 @@ export function getMathNavigationPositions(
 	const nextLineStart = closingLine.to < doc.length
 		? closingLine.to + 1
 		: doc.length;
+	const forwardBoundary = afterClosingDelimiter < closingLine.to
+		? afterClosingDelimiter
+		: nextLineStart;
 
 	return {
 		backwardBoundary: beforeClosingDelimiter,
-		forwardBoundary: nextLineStart,
+		forwardBoundary,
 		decorationPosition: afterClosingDelimiter,
+		decorationSide: forwardBoundary === afterClosingDelimiter ? -10 : 10,
 		owningPosition: afterClosingDelimiter,
 	};
 }

@@ -117,6 +117,7 @@ export function createMathNavigation(
 					 *
 					 * Strategy:
 					 * - Always attempt a wrap-aware visual move first via `view.moveVertically(...)`.
+					 * - Detect block widgets that split source and trailing text on one logical line.
 					 * - If that move crosses logical lines, check whether we skipped a folded formula line.
 					 *   If so, land on that line (to force it to expand) instead of moving past it.
 					 * - Only enter MathLive when we are leaving a formula line (i.e. Down would cross to the
@@ -133,6 +134,8 @@ export function createMathNavigation(
 					 */
 					const blockEntries = () =>
 						getMathFieldEntries(view).filter((e) => !e.isInline);
+					const positionsFor = (e: MathFieldEntry) =>
+						getMathNavigationPositions(doc, e, settings.inlineWidgetPosition);
 
 					/**
 					 * Map a MathLive widget back to its "owning" source line number.
@@ -145,15 +148,18 @@ export function createMathNavigation(
 					 * - detect "skipping" a folded formula line when moving down
 					 */
 					const owningLine = (e: MathFieldEntry) =>
-						doc.lineAt(getMathNavigationPositions(
-							doc, e, settings.inlineWidgetPosition
-						).owningPosition).number;
+						doc.lineAt(positionsFor(e).owningPosition).number;
 
 					/**
-					 * Return the block-math widget whose owning source line is `lineNo`, if any.
+					 * Return the block-math widget whose source segment contains `head`, if any.
 					 */
-					const entryForOwningLine = (lineNo: number) =>
-						blockEntries().find((e) => owningLine(e) === lineNo) ?? null;
+					const entryForSourcePosition = (lineNo: number, head: number) =>
+						blockEntries().find((e) => {
+							if (owningLine(e) !== lineNo) return false;
+							const positions = positionsFor(e);
+							return positions.forwardBoundary !== positions.decorationPosition ||
+								head < positions.decorationPosition;
+						}) ?? null;
 
 					/**
 					 * Find the next owning formula line number below `lineNo` (closest one), if any.
@@ -173,8 +179,11 @@ export function createMathNavigation(
 					 * Enter MathLive for the formula line `lineNo` if it has a widget.
 					 * Returns true when we actually entered.
 					 */
-					const enterMathLiveForOwningLine = (lineNo: number): boolean => {
-						const entry = entryForOwningLine(lineNo);
+					const enterMathLiveForSourcePosition = (
+						lineNo: number,
+						head: number
+					): boolean => {
+						const entry = entryForSourcePosition(lineNo, head);
 						if (!entry) return false;
 						entry.mfe.focus();
 						(entry.mfe as MathfieldElement).position = 0;
@@ -187,6 +196,20 @@ export function createMathNavigation(
 					const next = view.moveVertically(before, true);
 					const moved = next.head !== before.head || next.anchor !== before.anchor;
 					if (moved) {
+						// A block widget may split one logical line into source and trailing visual lines.
+						const crossedSameLineWidget = blockEntries().find((e) => {
+							const positions = positionsFor(e);
+							return positions.forwardBoundary === positions.decorationPosition &&
+								doc.lineAt(before.head).number === owningLine(e) &&
+								before.head < positions.decorationPosition &&
+								next.head >= positions.decorationPosition;
+						});
+						if (crossedSameLineWidget) {
+							crossedSameLineWidget.mfe.focus();
+							(crossedSameLineWidget.mfe as MathfieldElement).position = 0;
+							return true;
+						}
+
 						const beforeLine = doc.lineAt(before.head).number;
 						const afterLine = doc.lineAt(next.head).number;
 
@@ -212,7 +235,7 @@ export function createMathNavigation(
 
 							// No folded formula line was skipped. If the line we're leaving is a formula line,
 							// then we must have been on its last wrapped visual line. Enter MathLive now.
-							if (enterMathLiveForOwningLine(beforeLine)) return true;
+							if (enterMathLiveForSourcePosition(beforeLine, before.head)) return true;
 						}
 
 						// 3) Normal case: just move the selection to the computed next visual position.
@@ -225,7 +248,10 @@ export function createMathNavigation(
 
 					// 4) Can't move down further (bottom of document / viewport constraints).
 					// If we're on a formula line, allow Down to enter MathLive.
-					return enterMathLiveForOwningLine(doc.lineAt(before.head).number);
+					return enterMathLiveForSourcePosition(
+						doc.lineAt(before.head).number,
+						before.head
+					);
 				},
 			},
 			arrowEnterBinding(
@@ -235,7 +261,11 @@ export function createMathNavigation(
 					const positions = getMathNavigationPositions(
 						doc, e, settings.inlineWidgetPosition
 					);
-					return doc.lineAt(head).number === doc.lineAt(positions.forwardBoundary).number;
+					if (doc.lineAt(head).number !== doc.lineAt(positions.forwardBoundary).number) {
+						return false;
+					}
+					return positions.forwardBoundary !== positions.decorationPosition ||
+						head >= positions.forwardBoundary;
 				},
 				false,
 				settings

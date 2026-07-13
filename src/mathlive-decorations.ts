@@ -28,19 +28,23 @@ export function buildMathLiveDecorations(
 			if (!node.type.name.contains("formatting-math-end") || begin === -1) return;
 			end = node.from;
 			const mathContent = state.sliceDoc(begin, end);
-			const position = getMathNavigationPositions(state.doc, {
+			const positions = getMathNavigationPositions(state.doc, {
 				from: begin,
 				to: end,
 				isInline,
-			}, settings.inlineWidgetPosition).decorationPosition;
+			}, settings.inlineWidgetPosition);
 			if (!isInline || settings.inlineDisplay) {
-				builder.add(position, position, Decoration.widget({
-					widget: new MathLiveWidget(
-						{ from: begin, to: end }, mathContent, settings, isInline, global
-					),
-					block: !isInline,
-					side: isInline ? 1 : 10,
-				}));
+				builder.add(
+					positions.decorationPosition,
+					positions.decorationPosition,
+					Decoration.widget({
+						widget: new MathLiveWidget(
+							{ from: begin, to: end }, mathContent, settings, isInline, global
+						),
+						block: !isInline,
+						side: positions.decorationSide,
+					})
+				);
 			}
 			begin = end = -1;
 			isInline = false;

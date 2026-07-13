@@ -16,6 +16,25 @@ interface WidgetConfig {
 	to: number;
 }
 
+function placeSelectionAfterBlockWidget(view: EditorView, widgetDom: HTMLElement): void {
+	let nextLine = widgetDom.nextElementSibling;
+	while (nextLine && !nextLine.classList.contains("cm-line")) {
+		nextLine = nextLine.nextElementSibling;
+	}
+	if (!nextLine) return;
+
+	const rootSelection = (view.root as DocumentOrShadowRoot & {
+		getSelection?: () => Selection | null;
+	}).getSelection?.();
+	const selection = rootSelection ?? view.dom.ownerDocument.getSelection();
+	if (!selection) return;
+	const range = view.dom.ownerDocument.createRange();
+	range.selectNodeContents(nextLine);
+	range.collapse(true);
+	selection.removeAllRanges();
+	selection.addRange(range);
+}
+
 export class MathLiveWidget extends WidgetType {
 	equation: string;
 	config: WidgetConfig;
@@ -68,24 +87,48 @@ export class MathLiveWidget extends WidgetType {
 		}, 0);
 
 		this.style(mfe, div);
+		const initialPositions = getMathNavigationPositions(view.state.doc, {
+			from: this.config.from,
+			to: this.config.to,
+			isInline: this.isInline,
+		}, this.settings.inlineWidgetPosition);
+		const refreshInlinePreview = this.isInline &&
+			this.settings.inlineWidgetPosition === "right";
 
 		setupMathLiveInputSync({
 			mfe,
 			view,
 			settings: this.settings,
-			preserveInlineDom: this.isInline &&
-				this.settings.inlineWidgetPosition === "right",
+			preserveWidgetDom: initialPositions.decorationSide < 0,
+			refreshInlinePreview,
 			initialValue: this.equation,
 			getEquation: () => this.equation,
 			onEquationChange: (value) => { this.equation = value; },
 		});
 
 		// Arrow keys at boundaries: exit to LaTeX (on wrapper, capture phase, so we run before MathLive)
-		const exitToEditor = (cursorPos: number) => {
+		const exitToEditor = (
+			cursorPos: number,
+			assoc = 0,
+			placeAfterBlock = false
+		) => {
 			const docLen = view.state.doc.length;
 			if (cursorPos < 0 || cursorPos > docLen) return;
-			view.dispatch({ selection: EditorSelection.single(cursorPos) });
+			view.dispatch({ selection: EditorSelection.cursor(cursorPos, assoc) });
 			view.focus();
+			if (placeAfterBlock) {
+				placeSelectionAfterBlockWidget(view, div);
+				view.requestMeasure({
+					read: () => null,
+					write: () => {
+						if (
+							div.isConnected && view.hasFocus &&
+							view.state.selection.main.head === cursorPos
+						) placeSelectionAfterBlockWidget(view, div);
+					},
+					key: div,
+				});
+			}
 		};
 		div.addEventListener("keydown", (ev: KeyboardEvent) => {
 			if (document.activeElement !== mfe && !mfe.contains(document.activeElement)) return;
@@ -101,16 +144,24 @@ export class MathLiveWidget extends WidgetType {
 			}, this.settings.inlineWidgetPosition);
 			const atStart = mfe.position === 0;
 			const atEnd = mfe.position === mfe.lastOffset;
+			const rightInline = this.isInline &&
+				this.settings.inlineWidgetPosition === "right";
+			const exitsAfterBlock = !this.isInline &&
+				positions.forwardBoundary === positions.decorationPosition;
 			if (ev.key === "ArrowLeft" && atStart) {
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(positions.backwardBoundary);
+				exitToEditor(positions.backwardBoundary, rightInline ? -1 : 0);
 				return;
 			}
 			if (ev.key === "ArrowRight" && atEnd) {
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(positions.forwardBoundary);
+				exitToEditor(
+					positions.forwardBoundary,
+					rightInline || exitsAfterBlock ? 1 : 0,
+					exitsAfterBlock
+				);
 				return;
 			}
 
@@ -121,13 +172,17 @@ export class MathLiveWidget extends WidgetType {
 			if (ev.key === "ArrowUp" && atOutermost) {
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(positions.backwardBoundary);
+				exitToEditor(positions.backwardBoundary, rightInline ? -1 : 0);
 				return;
 			}
 			if (ev.key === "ArrowDown" && atOutermost) {
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(positions.forwardBoundary);
+				exitToEditor(
+					positions.forwardBoundary,
+					rightInline || exitsAfterBlock ? 1 : 0,
+					exitsAfterBlock
+				);
 				return;
 			}
 

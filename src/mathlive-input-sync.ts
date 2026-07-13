@@ -8,13 +8,22 @@ interface InputSyncOptions {
 	mfe: MathfieldElement;
 	view: EditorView;
 	settings: MathLiveEditorModePluginSettings;
-	preserveInlineDom: boolean;
+	preserveWidgetDom: boolean;
+	refreshInlinePreview: boolean;
 	initialValue: string;
 	getEquation: () => string;
 	onEquationChange: (value: string) => void;
 }
 
 export const mathLiveInputTransaction = Annotation.define<boolean>();
+
+type CodeMirrorInputState = { composing: number };
+
+function getCodeMirrorInputState(view: EditorView): CodeMirrorInputState | undefined {
+	return (view as unknown as {
+		inputState?: CodeMirrorInputState;
+	}).inputState;
+}
 
 function findPrecedingInlineMath(mfe: MathfieldElement): HTMLElement | null {
 	const wrapper = mfe.closest(".obsidian-mathlive-codemirror-wrapper");
@@ -46,12 +55,29 @@ export function setupMathLiveInputSync(options: InputSyncOptions): void {
 		mfe,
 		view,
 		settings,
-		preserveInlineDom,
+		preserveWidgetDom,
+		refreshInlinePreview,
 		initialValue,
 		getEquation,
 		onEquationChange,
 	} = options;
 	mfe.dataset.initialValue = initialValue;
+	let focusedPreviousComposing: number | undefined;
+	const beginCompositionGuard = () => {
+		if (!preserveWidgetDom || focusedPreviousComposing !== undefined) return;
+		const inputState = getCodeMirrorInputState(view);
+		if (!inputState) return;
+		focusedPreviousComposing = inputState.composing;
+		inputState.composing = 1;
+	};
+	const endCompositionGuard = () => {
+		if (focusedPreviousComposing === undefined) return;
+		const inputState = getCodeMirrorInputState(view);
+		if (inputState) inputState.composing = focusedPreviousComposing;
+		focusedPreviousComposing = undefined;
+	};
+	mfe.addEventListener("focus", beginCompositionGuard);
+	mfe.addEventListener("blur", endCompositionGuard);
 
 	const dispatchChange = (newValue: string) => {
 		const from = parseInt(mfe.dataset.from ?? "", 10);
@@ -59,28 +85,24 @@ export function setupMathLiveInputSync(options: InputSyncOptions): void {
 		if (Number.isNaN(from) || Number.isNaN(to)) return;
 		onEquationChange(newValue);
 		mfe.dataset.to = String(from + newValue.length);
-		const inputState = preserveInlineDom
-			? (view as unknown as {
-				inputState?: { composing: number };
-			}).inputState
-			: undefined;
+		const inputState = preserveWidgetDom ? getCodeMirrorInputState(view) : undefined;
 		const previousComposing = inputState?.composing;
-		const inlineMath = preserveInlineDom ? findPrecedingInlineMath(mfe) : null;
-		if (preserveInlineDom && inputState) inputState.composing = 1;
+		const inlineMath = refreshInlinePreview ? findPrecedingInlineMath(mfe) : null;
+		if (preserveWidgetDom && inputState) inputState.composing = 1;
 		try {
 			const transaction = {
 				changes: { from, to, insert: newValue },
-				...(preserveInlineDom
+				...(preserveWidgetDom
 					? { annotations: mathLiveInputTransaction.of(true) }
 					: {}),
 			};
 			view.dispatch(transaction);
 		} finally {
-			if (preserveInlineDom && inputState && previousComposing !== undefined) {
+			if (preserveWidgetDom && inputState && previousComposing !== undefined) {
 				inputState.composing = previousComposing;
 			}
 		}
-		if (preserveInlineDom) refreshInlineMath(inlineMath, newValue);
+		if (refreshInlinePreview) refreshInlineMath(inlineMath, newValue);
 	};
 
 	mfe.addEventListener("input", (event: InputEvent) => {

@@ -72,10 +72,12 @@ export default class MathLiveInEditorMode extends Plugin {
 	}
 
 	async loadSettings() {
+		const loadedSettings = await this.loadData() as Record<string, unknown> | null;
+		if (loadedSettings) delete loadedSettings.mathVirtualKeyboardMode;
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			await this.loadData()
+			loadedSettings
 		);
 	}
 

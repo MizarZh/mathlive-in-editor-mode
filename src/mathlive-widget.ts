@@ -91,7 +91,7 @@ export class MathLiveWidget extends WidgetType {
 			applyMathLiveSettings(mfe, this.settings, this.global);
 			configureTouchKeyboard(mfe, this.settings, this.isInline);
 
-			// Setup keyboard close button injection
+			// Setup the plugin-owned keyboard collapse overlay.
 			setupKeyboardCollapseButton(mfe);
 		}, 0);
 
@@ -259,8 +259,7 @@ export class MathLiveWidget extends WidgetType {
 				div.addClass("inline");
 				this.changeCSSClass(this.settings.inlineDisplay, div, "hidden");
 				this.changeCSSClass(
-					this.settings.touchKeyboardProvider === "mathlive" &&
-						this.settings.inlineKeyboardIcon,
+					this.settings.inlineKeyboardIcon,
 					mfe,
 					"hide-keyboard"
 				);
@@ -274,8 +273,7 @@ export class MathLiveWidget extends WidgetType {
 				div.removeClass("inline");
 				this.changeCSSClass(this.settings.blockDisplay, div, "hidden");
 				this.changeCSSClass(
-					this.settings.touchKeyboardProvider === "mathlive" &&
-						this.settings.blockKeyboardIcon,
+					this.settings.blockKeyboardIcon,
 					mfe,
 					"hide-keyboard"
 				);

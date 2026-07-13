@@ -1,10 +1,7 @@
 import { App, PluginSettingTab, Setting, Notice } from "obsidian";
 import type MathLiveInEditorMode from "./main";
 import { macros2newcommands } from "./utils";
-import type {
-	MathVirtualKeyboardMode,
-	TouchKeyboardProvider,
-} from "./settings-model";
+import type { TouchKeyboardProvider } from "./settings-model";
 
 export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 	plugin: MathLiveInEditorMode;
@@ -89,6 +86,7 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 
 			new Setting(this.containerEl)
 				.setName("Display block keyboard icon")
+				.setDesc("Show the button that manually opens the MathLive keyboard.")
 				.addToggle((cb) => {
 					cb.setValue(this.plugin.settings.blockKeyboardIcon);
 					cb.onChange(async (ev) => {
@@ -158,6 +156,7 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 
 			new Setting(this.containerEl)
 				.setName("Display inline keyboard icon")
+				.setDesc("Show the button that manually opens the MathLive keyboard.")
 				.addToggle((cb) => {
 					cb.setValue(this.plugin.settings.inlineKeyboardIcon);
 					cb.onChange(async (ev) => {
@@ -269,13 +268,13 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 			new Setting(this.containerEl).setName("Keyboard Settings").setHeading();
 
 			new Setting(this.containerEl)
-				.setName("Touch keyboard")
-				.setDesc("Choose which keyboard opens when a MathLive field is touched.")
+				.setName("Touch input keyboard")
+				.setDesc("Choose what opens automatically after a touch focuses a MathLive field. Mouse and keyboard focus are unaffected.")
 				.addDropdown((cb) => {
 					cb.addOptions({
 						"mathlive": "MathLive",
 						"system": "System (experimental)",
-						"disabled": "Disabled",
+						"disabled": "Do not open automatically",
 					});
 					cb.setValue(this.plugin.settings.touchKeyboardProvider);
 					cb.onChange(async (ev) => {
@@ -285,40 +284,16 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 					});
 				});
 
-			if (this.plugin.settings.touchKeyboardProvider === "mathlive") {
-				new Setting(this.containerEl)
-					.setName("MathLive virtual keyboard mode")
-					.setDesc(multilineDesc([
-						"auto: on touch-enabled devices, show the virtual keyboard panel when the mathfield is focused.",
-						"always: show the virtual keyboard whenever the mathfield is focused or touched.",
-						"manual: only show virtual keyboard by clicking keyboard icon.",
-						"sandboxed: the virtual keyboard is displayed in the current browsing context (iframe) if it has a defined container or is the top-level browsing context.",
-					]))
-					.addDropdown((cb) => {
-						cb.addOptions({
-							"auto": "auto",
-							"always": "always",
-							"manual": "manual",
-							"sandboxed": "sandboxed",
-						});
-						cb.setValue(this.plugin.settings.mathVirtualKeyboardMode);
-						cb.onChange(async (ev) => {
-							this.plugin.settings.mathVirtualKeyboardMode = ev as MathVirtualKeyboardMode;
-							await this.plugin.saveSettings();
-						});
+			new Setting(this.containerEl)
+				.setName("Hide MathLive keyboard when leaving field")
+				.setDesc("Hide the MathLive keyboard after focus moves outside MathLive fields and keyboard controls.")
+				.addToggle((cb) => {
+					cb.setValue(this.plugin.settings.hideMathVirtualKeyboardOnBlur);
+					cb.onChange(async (ev) => {
+						this.plugin.settings.hideMathVirtualKeyboardOnBlur = ev;
+						await this.plugin.saveSettings();
 					});
-
-				new Setting(this.containerEl)
-					.setName("Hide MathLive keyboard when leaving field")
-					.setDesc("Hide the virtual keyboard after focus moves outside MathLive fields and keyboard controls.")
-					.addToggle((cb) => {
-						cb.setValue(this.plugin.settings.hideMathVirtualKeyboardOnBlur);
-						cb.onChange(async (ev) => {
-							this.plugin.settings.hideMathVirtualKeyboardOnBlur = ev;
-							await this.plugin.saveSettings();
-						});
-					});
-			}
+				});
 
 			new Setting(this.containerEl)
 				.setName("Arrow key navigation between MathLive and editor")
@@ -361,15 +336,6 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 		}
 
 	}
-}
-
-function multilineDesc(descs: string[]) {
-	const descFragment = document.createDocumentFragment()
-	for (const desc of descs) {
-		descFragment.createEl('p').appendText(desc)
-	}
-	// const descEl = descFragment.createEl('b', 'u-pop');
-	return descFragment
 }
 
 function setValidationState(

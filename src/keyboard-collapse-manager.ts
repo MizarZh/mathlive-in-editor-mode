@@ -1,117 +1,98 @@
+import { setIcon } from "obsidian";
+
 export class KeyboardCollapseButtonManager {
-	private observer: MutationObserver | null = null;
-	private pendingTimeouts = new Set<number>();
-	private observerStopTimeout: number | null = null;
-	private isObserving = false;
-	private readonly COLLAPSE_BUTTON_CLASS = "obsidian-mathlive-keyboard-collapse";
-	private readonly TOOLBAR_SELECTOR = ".ML__edit-toolbar";
-	private readonly KEYBOARD_CONTAINER_SELECTOR = ".ML__keyboard";
+	private static readonly instances = new Map<
+		Document,
+		KeyboardCollapseButtonManager
+	>();
 
-	private static instance: KeyboardCollapseButtonManager | null = null;
+	private readonly keyboard: typeof window.mathVirtualKeyboard | null;
+	private button: HTMLButtonElement | null = null;
+	private readonly onKeyboardChange = () => this.syncButton();
 
-	static getInstance(): KeyboardCollapseButtonManager {
-		if (!this.instance) {
-			this.instance = new KeyboardCollapseButtonManager();
+	static getInstance(ownerDocument: Document): KeyboardCollapseButtonManager {
+		let instance = this.instances.get(ownerDocument);
+		if (!instance) {
+			instance = new KeyboardCollapseButtonManager(ownerDocument);
+			this.instances.set(ownerDocument, instance);
 		}
-		return this.instance;
+		return instance;
 	}
 
-	static disposeInstance(): void {
-		this.instance?.dispose();
-		this.instance = null;
+	static disposeInstances(): void {
+		for (const instance of this.instances.values()) instance.dispose();
+		this.instances.clear();
 	}
 
-	private constructor() { }
-
-	private getToolbars(): HTMLElement[] {
-		return Array.from(document.querySelectorAll(this.TOOLBAR_SELECTOR));
+	private constructor(private readonly ownerDocument: Document) {
+		this.keyboard = ownerDocument.defaultView?.mathVirtualKeyboard ?? null;
+		this.keyboard?.addEventListener(
+			"virtual-keyboard-toggle",
+			this.onKeyboardChange
+		);
+		this.keyboard?.addEventListener("geometrychange", this.onKeyboardChange);
 	}
 
-	private isKeyboardVisible(): boolean {
-		const keyboard = document.querySelector(this.KEYBOARD_CONTAINER_SELECTOR);
-		return keyboard !== null && (keyboard as HTMLElement).offsetParent !== null;
-	}
-
-	private hasCollapseButton(toolbar: HTMLElement): boolean {
-		return !!toolbar.querySelector(`.${this.COLLAPSE_BUTTON_CLASS}`);
-	}
-
-	private createCollapseButton(): HTMLElement {
-		const button = document.createElement("div");
-		button.className = `action ${this.COLLAPSE_BUTTON_CLASS}`;
-		button.innerHTML = "✕";
-		button.setAttribute("aria-label", "Collapse Keyboard");
-		button.dataset.tooltip = "Collapse Keyboard";
-		button.addEventListener("click", () => {
-			window.mathVirtualKeyboard?.hide();
-		});
+	private createButton(): HTMLButtonElement {
+		const button = this.ownerDocument.createElement("button");
+		button.type = "button";
+		button.className = "obsidian-mathlive-keyboard-collapse";
+		button.setAttribute("aria-label", "Collapse keyboard");
+		button.setAttribute("data-tooltip-position", "top");
+		button.setAttribute("data-tooltip", "Collapse keyboard");
+		setIcon(button, "chevron-down");
+		button.addEventListener("click", () => this.keyboard?.hide());
 		return button;
 	}
 
-	private injectButton(): void {
-		for (const toolbar of this.getToolbars()) {
-			if (!this.hasCollapseButton(toolbar)) {
-				toolbar.appendChild(this.createCollapseButton());
-			}
+	private removeButton(): void {
+		this.button?.remove();
+		this.button = null;
+	}
+
+	private syncButton(): void {
+		if (!this.keyboard?.visible) {
+			this.removeButton();
+			return;
 		}
-	}
 
-	private startObserving(): void {
-		if (this.isObserving) return;
-		this.observer = new MutationObserver(() => {
-			if (this.isKeyboardVisible()) this.injectButton();
-		});
-		this.observer.observe(document.body, { childList: true, subtree: true });
-		this.isObserving = true;
-	}
+		const bounds = this.keyboard.boundingRect;
+		if (bounds.width <= 0 || bounds.height <= 0) {
+			this.removeButton();
+			return;
+		}
 
-	private stopObserving(): void {
-		this.observer?.disconnect();
-		this.observer = null;
-		this.isObserving = false;
+		if (!this.button) {
+			this.button = this.createButton();
+			this.ownerDocument.body.appendChild(this.button);
+		}
+
+		const buttonSize = 36;
+		const inset = 8;
+		const viewportWidth = this.ownerDocument.documentElement.clientWidth;
+		const maxLeft = Math.max(inset, viewportWidth - buttonSize - inset);
+		const left = Math.min(
+			maxLeft,
+			Math.max(bounds.left + inset, bounds.right - buttonSize - inset)
+		);
+		this.button.style.left = `${left}px`;
+		this.button.style.top = `${Math.max(inset, bounds.top + inset)}px`;
 	}
 
 	dispose(): void {
-		for (const timeout of this.pendingTimeouts) {
-			window.clearTimeout(timeout);
-		}
-		this.pendingTimeouts.clear();
-		if (this.observerStopTimeout !== null) {
-			window.clearTimeout(this.observerStopTimeout);
-			this.observerStopTimeout = null;
-		}
-		this.stopObserving();
-		document.querySelectorAll(`.${this.COLLAPSE_BUTTON_CLASS}`).forEach(
-			(button) => button.remove()
+		this.keyboard?.removeEventListener(
+			"virtual-keyboard-toggle",
+			this.onKeyboardChange
 		);
+		this.keyboard?.removeEventListener("geometrychange", this.onKeyboardChange);
+		this.removeButton();
 	}
 
 	ensureButton(): void {
-		for (const timeout of this.pendingTimeouts) {
-			window.clearTimeout(timeout);
-		}
-		this.pendingTimeouts.clear();
-		if (this.observerStopTimeout !== null) {
-			window.clearTimeout(this.observerStopTimeout);
-			this.observerStopTimeout = null;
-		}
-
-		this.startObserving();
-		if (this.isKeyboardVisible()) this.injectButton();
-		for (const delay of [100, 300, 600, 1000]) {
-			const timeout = window.setTimeout(() => {
-				this.pendingTimeouts.delete(timeout);
-				if (this.isKeyboardVisible()) this.injectButton();
-			}, delay);
-			this.pendingTimeouts.add(timeout);
-		}
-		this.observerStopTimeout = window.setTimeout(() => {
-			this.observerStopTimeout = null;
-			this.stopObserving();
-		}, 1500);
+		this.syncButton();
 	}
 }
 
 export function disposeKeyboardCollapseManager(): void {
-	KeyboardCollapseButtonManager.disposeInstance();
+	KeyboardCollapseButtonManager.disposeInstances();
 }

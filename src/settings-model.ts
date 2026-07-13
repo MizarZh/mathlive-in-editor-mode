@@ -3,11 +3,9 @@ import type {
 	InlineShortcutDefinitions,
 	Keybinding,
 	MacroDictionary,
-	VirtualKeyboardPolicy,
 } from "mathlive";
 
 export type TouchKeyboardProvider = "mathlive" | "system" | "disabled";
-export type MathVirtualKeyboardMode = VirtualKeyboardPolicy | "always";
 export type InlineWidgetPosition = "left" | "right";
 
 export interface ParsedMathLiveSettings {
@@ -40,7 +38,6 @@ export interface MathLiveEditorModePluginSettings {
 	keybindings: string;
 	immediateUpdate: boolean;
 	touchKeyboardProvider: TouchKeyboardProvider;
-	mathVirtualKeyboardMode: MathVirtualKeyboardMode;
 	hideMathVirtualKeyboardOnBlur: boolean;
 	arrowKeyNavigation: boolean;
 }
@@ -61,7 +58,6 @@ export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
 	keybindings: "",
 	immediateUpdate: true,
 	touchKeyboardProvider: "mathlive",
-	mathVirtualKeyboardMode: "auto",
 	hideMathVirtualKeyboardOnBlur: false,
 	arrowKeyNavigation: true,
 };

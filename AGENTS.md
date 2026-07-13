@@ -11,7 +11,7 @@ This repository contains **MathLive in Editor Mode**, an Obsidian plugin that ad
 - Can independently hide Obsidian's original MathJax rendering for block and inline equations.
 - Supports custom MathLive macros, inline shortcuts, and keybindings written as JSON5.
 - Can convert configured MathLive macros into LaTeX `\newcommand` declarations for the clipboard.
-- Supports MathLive virtual keyboard policies (`auto`, `manual`, and `sandboxed`) and injects a keyboard collapse button.
+- Supports touch-specific MathLive, system, and no-auto-open keyboard behavior, independent manual keyboard icons, and a plugin-owned keyboard collapse overlay.
 - Supports arrow-key navigation between CodeMirror and MathLive fields, including wrapped and folded block-math lines.
 - Allows `Escape` to discard the current field edit and restore its initial value.
 - Provides an Obsidian command, `Toggle MathLive block`, which can be assigned a hotkey.
@@ -30,7 +30,7 @@ This repository contains **MathLive in Editor Mode**, an Obsidian plugin that ad
 - `src/mathlive-menu-controller.ts`: document-level outside-click dismissal for MathLive shadow-DOM menus and listener cleanup.
 - `src/touch-keyboard-controller.ts`: Android backslash handling and touch/system/MathLive keyboard behavior.
 - `src/math-boundaries.ts`: shared inline and block formula navigation and decoration positions.
-- `src/keyboard-collapse-manager.ts`: virtual-keyboard collapse button injection, retries, observer, timers, and disposal.
+- `src/keyboard-collapse-manager.ts`: event-driven virtual-keyboard collapse overlay positioning and disposal.
 - `src/settings-model.ts`: settings schema, defaults, JSON5 parsing, validation, and parsed runtime cache types.
 - `src/setting.ts`: Obsidian settings UI, field-level validation display, and debounced save triggers.
 - `src/utils.ts`: JSON5 macro conversion to LaTeX `\newcommand` declarations.
@@ -49,7 +49,7 @@ This repository contains **MathLive in Editor Mode**, an Obsidian plugin that ad
 
 ## Settings
 
-Default behavior enables MathLive globally and for block equations, disables inline MathLive, places inline widgets on the left, keeps original MathJax visible, updates source immediately, uses automatic virtual-keyboard behavior, and enables arrow-key navigation. Menu and keyboard icons are configurable separately for block and inline fields. Right-side inline placement enables the experimental private CodeMirror focus-preservation path.
+Default behavior enables MathLive globally and for block equations, disables inline MathLive, places inline widgets on the left, keeps original MathJax visible, updates source immediately, opens the MathLive keyboard after touch focus only, and enables arrow-key navigation. Mouse and keyboard focus never open a virtual keyboard automatically. Menu and manual MathLive keyboard icons are configurable separately for block and inline fields. Right-side inline placement enables the experimental private CodeMirror focus-preservation path.
 
 Macro, shortcut, and keybinding settings are parsed with JSON5. Invalid values produce an Obsidian notice and are logged to the console. MathLive macros do not automatically affect Obsidian's MathJax renderer; users can copy generated `\newcommand` declarations when MathJax also needs them.
 

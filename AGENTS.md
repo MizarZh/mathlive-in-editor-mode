@@ -27,6 +27,7 @@ This repository contains **MathLive in Editor Mode**, an Obsidian plugin that ad
 - `src/mathlive-widget.ts`: MathLive field creation, source synchronization, cancellation, navigation back to CodeMirror, styling, and controller composition.
 - `src/mathlive-settings-applier.ts`: applies parsed macros, shortcuts, and keybindings while preserving MathLive defaults.
 - `src/mathlive-input-sync.ts`: immediate/deferred source synchronization and Escape cancellation.
+- `src/mathlive-menu-controller.ts`: document-level outside-click dismissal for MathLive shadow-DOM menus and listener cleanup.
 - `src/touch-keyboard-controller.ts`: Android backslash handling and touch/system/MathLive keyboard behavior.
 - `src/math-boundaries.ts`: shared inline and block formula navigation and decoration positions.
 - `src/keyboard-collapse-manager.ts`: virtual-keyboard collapse button injection, retries, observer, timers, and disposal.

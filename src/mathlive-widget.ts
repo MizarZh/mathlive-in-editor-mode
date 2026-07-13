@@ -9,6 +9,11 @@ import {
 	setupMathLiveInputSync,
 } from "./mathlive-input-sync";
 import {
+	dismissOpenMathLiveMenu,
+	disposeMathLiveMenuDismissal,
+	setupMathLiveMenuDismissal,
+} from "./mathlive-menu-controller";
+import {
 	configureTouchKeyboard,
 	setupBackslashCommandInput,
 	setupKeyboardCollapseButton,
@@ -17,18 +22,6 @@ import {
 interface WidgetConfig {
 	from: number;
 	to: number;
-}
-
-function dismissOpenMathLiveMenu(mfe: MathfieldElement): void {
-	const menu = mfe.shadowRoot?.querySelector<HTMLElement>(
-		'menu[part="ui-menu-container"][popover]'
-	);
-	menu?.dispatchEvent(new KeyboardEvent("keydown", {
-		key: "Escape",
-		bubbles: true,
-		cancelable: true,
-		composed: true,
-	}));
 }
 
 function placeSelectionAfterBlockWidget(view: EditorView, widgetDom: HTMLElement): void {
@@ -79,6 +72,7 @@ export class MathLiveWidget extends WidgetType {
 		const mfe = document.createElement("math-field") as MathfieldElement;
 		this.mathfield = mfe;
 		div.appendChild(mfe);
+		setupMathLiveMenuDismissal(mfe);
 		div.addClass("obsidian-mathlive-codemirror-wrapper");
 		div.addClass("cm-line");
 		mfe.defaultMode = this.isInline ? "inline-math" : "math";
@@ -240,6 +234,7 @@ export class MathLiveWidget extends WidgetType {
 		)[0] as MathfieldElement;
 
 		dismissOpenMathLiveMenu(mfe);
+		disposeMathLiveMenuDismissal(mfe);
 		disposeMathLiveInputSync(mfe);
 		mfe.blur();
 		mfe.dataset.macros = "";

@@ -4,7 +4,10 @@ import { MathfieldElement } from "mathlive";
 import type { MathLiveEditorModePluginSettings, Global } from "./settings-model";
 import { getMathNavigationPositions } from "./math-boundaries";
 import { applyMathLiveSettings } from "./mathlive-settings-applier";
-import { setupMathLiveInputSync } from "./mathlive-input-sync";
+import {
+	disposeMathLiveInputSync,
+	setupMathLiveInputSync,
+} from "./mathlive-input-sync";
 import {
 	configureTouchKeyboard,
 	setupBackslashCommandInput,
@@ -14,6 +17,18 @@ import {
 interface WidgetConfig {
 	from: number;
 	to: number;
+}
+
+function dismissOpenMathLiveMenu(mfe: MathfieldElement): void {
+	const menu = mfe.shadowRoot?.querySelector<HTMLElement>(
+		'menu[part="ui-menu-container"][popover]'
+	);
+	menu?.dispatchEvent(new KeyboardEvent("keydown", {
+		key: "Escape",
+		bubbles: true,
+		cancelable: true,
+		composed: true,
+	}));
 }
 
 function placeSelectionAfterBlockWidget(view: EditorView, widgetDom: HTMLElement): void {
@@ -224,6 +239,9 @@ export class MathLiveWidget extends WidgetType {
 			"math-field"
 		)[0] as MathfieldElement;
 
+		dismissOpenMathLiveMenu(mfe);
+		disposeMathLiveInputSync(mfe);
+		mfe.blur();
 		mfe.dataset.macros = "";
 		mfe.dataset.shortcuts = "";
 	}

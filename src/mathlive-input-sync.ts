@@ -18,11 +18,18 @@ interface InputSyncOptions {
 export const mathLiveInputTransaction = Annotation.define<boolean>();
 
 type CodeMirrorInputState = { composing: number };
+type InputSyncCleanup = () => void;
+
+const inputSyncCleanups = new WeakMap<MathfieldElement, InputSyncCleanup>();
 
 function getCodeMirrorInputState(view: EditorView): CodeMirrorInputState | undefined {
 	return (view as unknown as {
 		inputState?: CodeMirrorInputState;
 	}).inputState;
+}
+
+export function disposeMathLiveInputSync(mfe: MathfieldElement): void {
+	inputSyncCleanups.get(mfe)?.();
 }
 
 function findPrecedingInlineMath(mfe: MathfieldElement): HTMLElement | null {
@@ -51,6 +58,7 @@ function refreshInlineMath(math: HTMLElement | null, source: string): void {
 }
 
 export function setupMathLiveInputSync(options: InputSyncOptions): void {
+	disposeMathLiveInputSync(options.mfe);
 	const {
 		mfe,
 		view,
@@ -90,13 +98,11 @@ export function setupMathLiveInputSync(options: InputSyncOptions): void {
 		const inlineMath = refreshInlinePreview ? findPrecedingInlineMath(mfe) : null;
 		if (preserveWidgetDom && inputState) inputState.composing = 1;
 		try {
-			const transaction = {
+			// MathLive menu callbacks still reference this field after changing its value.
+			view.dispatch({
 				changes: { from, to, insert: newValue },
-				...(preserveWidgetDom
-					? { annotations: mathLiveInputTransaction.of(true) }
-					: {}),
-			};
-			view.dispatch(transaction);
+				annotations: mathLiveInputTransaction.of(true),
+			});
 		} finally {
 			if (preserveWidgetDom && inputState && previousComposing !== undefined) {
 				inputState.composing = previousComposing;
@@ -105,7 +111,7 @@ export function setupMathLiveInputSync(options: InputSyncOptions): void {
 		if (refreshInlinePreview) refreshInlineMath(inlineMath, newValue);
 	};
 
-	mfe.addEventListener("input", (event: InputEvent) => {
+	const onInput = (event: InputEvent) => {
 		const target = event.target as MathfieldElement;
 		if (settings.immediateUpdate) {
 			if (getEquation() !== target.value) dispatchChange(target.value);
@@ -113,15 +119,17 @@ export function setupMathLiveInputSync(options: InputSyncOptions): void {
 		} else {
 			mfe.dataset.hasUnsavedChanges = "true";
 		}
-	});
+	};
+	mfe.addEventListener("input", onInput);
 
-	mfe.addEventListener("blur", () => {
+	const onDeferredBlur = () => {
 		if (mfe.dataset.hasUnsavedChanges !== "true") return;
 		if (mfe.value !== getEquation()) dispatchChange(mfe.value);
 		mfe.dataset.hasUnsavedChanges = "false";
-	});
+	};
+	mfe.addEventListener("blur", onDeferredBlur);
 
-	mfe.addEventListener("keydown", (event: KeyboardEvent) => {
+	const onKeydown = (event: KeyboardEvent) => {
 		if (event.key !== "Escape") return;
 		const from = parseInt(mfe.dataset.from ?? "", 10);
 		const to = parseInt(mfe.dataset.to ?? "", 10);
@@ -137,5 +145,18 @@ export function setupMathLiveInputSync(options: InputSyncOptions): void {
 		mfe.blur();
 		event.preventDefault();
 		event.stopPropagation();
-	});
+	};
+	mfe.addEventListener("keydown", onKeydown);
+
+	const cleanup = () => {
+		if (inputSyncCleanups.get(mfe) !== cleanup) return;
+		inputSyncCleanups.delete(mfe);
+		mfe.removeEventListener("focus", beginCompositionGuard);
+		mfe.removeEventListener("blur", endCompositionGuard);
+		mfe.removeEventListener("input", onInput);
+		mfe.removeEventListener("blur", onDeferredBlur);
+		mfe.removeEventListener("keydown", onKeydown);
+		endCompositionGuard();
+	};
+	inputSyncCleanups.set(mfe, cleanup);
 }

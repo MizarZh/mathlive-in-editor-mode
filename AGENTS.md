@@ -67,6 +67,7 @@ The build entry point is `src/main.ts`, and output is written to `main.js`. Ther
 - Preserve Markdown as the source of truth; widgets must remain editor decorations.
 - Keep position metadata (`data-from` and `data-to`) correct after every source edit.
 - Avoid replacing a focused MathLive value from CodeMirror updates, because that interrupts active input.
+- Map every MathLive source transaction through the existing decoration set so a focused `math-field` is not disconnected while MathLive menu callbacks are active.
 - Arrow navigation depends on exact delimiter-relative positions and special handling for folded or wrapped block equations.
 - Settings objects are shared with editor extensions and checked at runtime, allowing most toggles to take effect without re-registering the extension.
 - Body classes used to hide MathJax must be removed during plugin unload.
@@ -80,4 +81,4 @@ Only classify a member as non-public here when it is absent from the correspondi
 
 No non-public MathLive method is currently used. `window.mathVirtualKeyboard`, Mathfield APIs, Obsidian `renderMath()`/`finishRenderMath()`, and Obsidian's declared global DOM/string helpers are public for this classification. The commented `app.emulateMobile()` example is not runtime usage.
 
-When adding or removing a non-public member, update this section, `README.md`, and `design.md` together. After Obsidian or CodeMirror upgrades, runtime-test the affected behavior; lint and TypeScript success are insufficient. Prefer a public-API overlay/portal if `inputState.composing` stops working.
+When adding or removing a non-public member, update this section, `README.md`, and `design.md` together. After Obsidian or CodeMirror upgrades, runtime-test the affected behavior, including MathLive menu selection and dismissal; lint and TypeScript success are insufficient. Prefer a public-API overlay/portal if `inputState.composing` stops working.

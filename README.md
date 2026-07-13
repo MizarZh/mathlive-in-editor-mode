@@ -38,4 +38,4 @@ The plugin currently uses two groups of members that are absent from their publi
 
 No non-public MathLive method is currently called. `window.mathVirtualKeyboard`, Mathfield methods/events, Obsidian `renderMath()`/`finishRenderMath()`, and Obsidian's typed global DOM/string helpers are public APIs. DOM queries, CSS selectors, shadow-DOM access, and DOM mutation are implementation techniques rather than non-public method calls, so they are not classified as non-public APIs here.
 
-After updating Obsidian or CodeMirror, manually verify continuous inline input, same-line block trailing-text navigation, focus retention, immediate source/MathJax updates, and the Set hotkey button. `pnpm build` cannot detect private-member changes.
+After updating Obsidian or CodeMirror, manually verify continuous inline input, same-line block trailing-text navigation, focus retention, MathLive menu selection/dismissal, immediate source/MathJax updates, and the Set hotkey button. `pnpm build` cannot detect private-member changes.

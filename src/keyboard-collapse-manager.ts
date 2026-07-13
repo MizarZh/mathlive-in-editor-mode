@@ -11,6 +11,18 @@ export class KeyboardCollapseButtonManager {
 	private readonly COLLAPSE_BUTTON_CLASS = "obsidian-mathlive-keyboard-collapse";
 	private readonly TOOLBAR_SELECTOR = ".ML__edit-toolbar";
 	private readonly KEYBOARD_CONTAINER_SELECTOR = ".ML__keyboard";
+	private readonly keyboard: typeof window.mathVirtualKeyboard | null;
+	private readonly onKeyboardToggle = () => {
+		if (this.keyboard?.visible) {
+			this.cancelObserverStop();
+			this.startObserving();
+			this.injectButton();
+			return;
+		}
+		this.clearPendingTimeouts();
+		this.cancelObserverStop();
+		this.stopObserving();
+	};
 
 	static getInstance(ownerDocument: Document): KeyboardCollapseButtonManager {
 		let instance = this.instances.get(ownerDocument);
@@ -26,7 +38,13 @@ export class KeyboardCollapseButtonManager {
 		this.instances.clear();
 	}
 
-	private constructor(private readonly ownerDocument: Document) { }
+	private constructor(private readonly ownerDocument: Document) {
+		this.keyboard = ownerDocument.defaultView?.mathVirtualKeyboard ?? null;
+		this.keyboard?.addEventListener(
+			"virtual-keyboard-toggle",
+			this.onKeyboardToggle
+		);
+	}
 
 	private get ownerWindow(): Window {
 		return this.ownerDocument.defaultView ?? window;
@@ -93,29 +111,34 @@ export class KeyboardCollapseButtonManager {
 		this.isObserving = false;
 	}
 
-	dispose(): void {
+	private clearPendingTimeouts(): void {
 		for (const timeout of this.pendingTimeouts) {
 			this.ownerWindow.clearTimeout(timeout);
 		}
 		this.pendingTimeouts.clear();
-		if (this.observerStopTimeout !== null) {
-			this.ownerWindow.clearTimeout(this.observerStopTimeout);
-			this.observerStopTimeout = null;
-		}
+	}
+
+	private cancelObserverStop(): void {
+		if (this.observerStopTimeout === null) return;
+		this.ownerWindow.clearTimeout(this.observerStopTimeout);
+		this.observerStopTimeout = null;
+	}
+
+	dispose(): void {
+		this.keyboard?.removeEventListener(
+			"virtual-keyboard-toggle",
+			this.onKeyboardToggle
+		);
+		this.clearPendingTimeouts();
+		this.cancelObserverStop();
 		this.stopObserving();
 		this.ownerDocument.querySelectorAll(`.${this.COLLAPSE_BUTTON_CLASS}`)
 			.forEach((button) => button.remove());
 	}
 
 	ensureButton(): void {
-		for (const timeout of this.pendingTimeouts) {
-			this.ownerWindow.clearTimeout(timeout);
-		}
-		this.pendingTimeouts.clear();
-		if (this.observerStopTimeout !== null) {
-			this.ownerWindow.clearTimeout(this.observerStopTimeout);
-			this.observerStopTimeout = null;
-		}
+		this.clearPendingTimeouts();
+		this.cancelObserverStop();
 
 		this.startObserving();
 		if (this.isKeyboardVisible()) this.injectButton();
@@ -128,6 +151,10 @@ export class KeyboardCollapseButtonManager {
 		}
 		this.observerStopTimeout = this.ownerWindow.setTimeout(() => {
 			this.observerStopTimeout = null;
+			if (this.isKeyboardVisible()) {
+				this.injectButton();
+				return;
+			}
 			this.stopObserving();
 		}, 1500);
 	}

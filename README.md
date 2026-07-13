@@ -24,4 +24,15 @@ If you want the new command to also show up in builtin mathjax block, you can us
 
 ## Bugfix TODO
 - [ ] Input issue in tablet/phone
-- [x] Cursor blurs when inputing in inline math field. (Temporary solution: move inline math field to the left.)
+- [ ] Keep focus and immediate MathJax refresh with the inline MathLive field on the right. The current implementation is experimental and depends on internal editor behavior described below.
+
+## Non-public APIs
+
+The plugin currently uses two groups of members that are absent from their public API declarations:
+
+- `src/mathlive-input-sync.ts` writes CodeMirror's private `EditorView.inputState.composing` property around inline MathLive transactions. Public CodeMirror exposes the read-only `EditorView.composing` getter, but does not expose `inputState` or a setter. Access is feature-detected, and the previous value is restored in `finally`.
+- `src/setting.ts` uses Obsidian settings internals to open and filter the Hotkeys tab: `app.setting`, `openTabById()`, `activeTab`, `activeTab.headerComponent.components`, and `activeTab.updateHotkeyVisibility()`. These members are absent from the official Obsidian API. The positional component lookup is especially fragile.
+
+No non-public MathLive method is currently called. `window.mathVirtualKeyboard`, Mathfield methods/events, Obsidian `renderMath()`/`finishRenderMath()`, and Obsidian's typed global DOM/string helpers are public APIs. DOM queries, CSS selectors, shadow-DOM access, and DOM mutation are implementation techniques rather than non-public method calls, so they are not classified as non-public APIs here.
+
+After updating Obsidian or CodeMirror, manually verify continuous inline input, focus retention, immediate source/MathJax updates, and the Set hotkey button. `pnpm build` cannot detect private-member changes.

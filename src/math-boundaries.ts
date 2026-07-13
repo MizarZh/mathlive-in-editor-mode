@@ -22,15 +22,13 @@ export function getMathNavigationPositions(
 	range: MathSourceRange
 ): MathNavigationPositions {
 	if (range.isInline) {
-		const openingDelimiter = clampPosition(range.from - 1, doc);
-		// Inline widgets are anchored at the opening delimiter. These are the
-		// CodeMirror positions immediately before and after that visual widget.
-		const afterWidget = clampPosition(range.from, doc);
+		const beforeClosingDelimiter = clampPosition(range.to, doc);
+		const afterClosingDelimiter = clampPosition(range.to + 1, doc);
 		return {
-			backwardBoundary: openingDelimiter,
-			forwardBoundary: afterWidget,
-			decorationPosition: openingDelimiter,
-			owningPosition: openingDelimiter,
+			backwardBoundary: beforeClosingDelimiter,
+			forwardBoundary: afterClosingDelimiter,
+			decorationPosition: afterClosingDelimiter,
+			owningPosition: afterClosingDelimiter,
 		};
 	}
 

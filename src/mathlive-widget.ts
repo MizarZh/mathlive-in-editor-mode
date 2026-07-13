@@ -1,4 +1,4 @@
-import { EditorSelection } from "@codemirror/state";
+import { ChangeDesc, EditorSelection } from "@codemirror/state";
 import { EditorView, WidgetType } from "@codemirror/view";
 import { MathfieldElement } from "mathlive";
 import type { MathLiveEditorModePluginSettings, Global } from "./settings-model";
@@ -23,6 +23,7 @@ export class MathLiveWidget extends WidgetType {
 	isInline: boolean;
 	global: Global;
 	private initializationTimeout: number | null = null;
+	private mathfield: MathfieldElement | null = null;
 
 	constructor(
 		config: WidgetConfig,
@@ -42,6 +43,7 @@ export class MathLiveWidget extends WidgetType {
 		// element initialization
 		const div = document.createElement("div");
 		const mfe = document.createElement("math-field") as MathfieldElement;
+		this.mathfield = mfe;
 		div.appendChild(mfe);
 		div.addClass("obsidian-mathlive-codemirror-wrapper");
 		div.addClass("cm-line");
@@ -71,6 +73,7 @@ export class MathLiveWidget extends WidgetType {
 			mfe,
 			view,
 			settings: this.settings,
+			isInline: this.isInline,
 			initialValue: this.equation,
 			getEquation: () => this.equation,
 			onEquationChange: (value) => { this.equation = value; },
@@ -155,6 +158,7 @@ export class MathLiveWidget extends WidgetType {
 		return true;
 	}
 	destroy(dom: HTMLElement): void {
+		this.mathfield = null;
 		if (this.initializationTimeout !== null) {
 			window.clearTimeout(this.initializationTimeout);
 			this.initializationTimeout = null;
@@ -166,6 +170,16 @@ export class MathLiveWidget extends WidgetType {
 
 		mfe.dataset.macros = "";
 		mfe.dataset.shortcuts = "";
+	}
+	mapSourceRange(changes: ChangeDesc): void {
+		this.config = {
+			from: changes.mapPos(this.config.from, -1),
+			to: changes.mapPos(this.config.to, 1),
+		};
+		if (this.mathfield?.isConnected) {
+			this.mathfield.dataset.from = String(this.config.from);
+			this.mathfield.dataset.to = String(this.config.to);
+		}
 	}
 	style(mfe: MathfieldElement, div: HTMLDivElement) {
 		if (this.settings.display) {
@@ -215,13 +229,21 @@ export class MathLiveWidget extends WidgetType {
 		}
 	}
 
-	// eq(other: MathLiveWidget) {
-	// 	// Only compare anchor position (from) and type, not 'to' or 'equation'
-	// 	// This allows CodeMirror to reuse DOM when content changes, avoiding rebuild and focus loss
-	// 	return (
-	// 		other instanceof MathLiveWidget &&
-	// 		other.config.from === this.config.from &&
-	// 		other.isInline === this.isInline
-	// 	);
-	// }
+	eq(other: MathLiveWidget): boolean {
+		if (
+			!this.isInline || !other.isInline ||
+			this.config.from !== other.config.from ||
+			this.equation === other.equation
+		) return false;
+
+		let active = document.activeElement;
+		if (active?.getRootNode() instanceof ShadowRoot) {
+			active = (active.getRootNode() as ShadowRoot).host;
+		}
+		if (!(active instanceof HTMLElement) || active.tagName !== "MATH-FIELD") {
+			return false;
+		}
+
+		return parseInt(active.dataset.from ?? "", 10) === this.config.from;
+	}
 }

@@ -70,3 +70,14 @@ The build entry point is `src/main.ts`, and output is written to `main.js`. Ther
 - Arrow navigation depends on exact delimiter-relative positions and special handling for folded or wrapped block equations.
 - Settings objects are shared with editor extensions and checked at runtime, allowing most toggles to take effect without re-registering the extension.
 - Body classes used to hide MathJax must be removed during plugin unload.
+
+## Non-Public APIs
+
+Only classify a member as non-public here when it is absent from the corresponding public API declarations. HTML structure, CSS selectors, DOM queries/mutations, and shadow-DOM access may be fragile, but are not non-public methods under this definition.
+
+- `src/mathlive-input-sync.ts` mutates private CodeMirror property `EditorView.inputState.composing`. Public CodeMirror only exposes read-only `EditorView.composing`. Keep feature detection, preserve the prior numeric value, and restore it in `finally`. Never leave CodeMirror in composing state.
+- `src/setting.ts` uses Obsidian settings internals `app.setting`, `openTabById()`, `activeTab`, `activeTab.headerComponent.components`, and `activeTab.updateHotkeyVisibility()`. None are in the official Obsidian API. Keep failures isolated to the Set hotkey convenience action.
+
+No non-public MathLive method is currently used. `window.mathVirtualKeyboard`, Mathfield APIs, Obsidian `renderMath()`/`finishRenderMath()`, and Obsidian's declared global DOM/string helpers are public for this classification. The commented `app.emulateMobile()` example is not runtime usage.
+
+When adding or removing a non-public member, update this section, `README.md`, and `design.md` together. After Obsidian or CodeMirror upgrades, runtime-test the affected behavior; lint and TypeScript success are insufficient. Prefer a public-API overlay/portal if `inputState.composing` stops working.

@@ -1,4 +1,5 @@
 import type { Text } from "@codemirror/state";
+import type { InlineWidgetPosition } from "./settings-model";
 
 export interface MathSourceRange {
 	from: number;
@@ -19,9 +20,20 @@ function clampPosition(position: number, doc: Text): number {
 
 export function getMathNavigationPositions(
 	doc: Text,
-	range: MathSourceRange
+	range: MathSourceRange,
+	inlineWidgetPosition: InlineWidgetPosition = "left"
 ): MathNavigationPositions {
 	if (range.isInline) {
+		if (inlineWidgetPosition === "left") {
+			const openingDelimiter = clampPosition(range.from - 1, doc);
+			const afterWidget = clampPosition(range.from, doc);
+			return {
+				backwardBoundary: openingDelimiter,
+				forwardBoundary: afterWidget,
+				decorationPosition: openingDelimiter,
+				owningPosition: openingDelimiter,
+			};
+		}
 		const beforeClosingDelimiter = clampPosition(range.to, doc);
 		const afterClosingDelimiter = clampPosition(range.to + 1, doc);
 		return {

@@ -48,7 +48,7 @@ This repository contains **MathLive in Editor Mode**, an Obsidian plugin that ad
 
 ## Settings
 
-Default behavior enables MathLive globally and for block equations, disables inline MathLive, keeps original MathJax visible, updates source immediately, uses automatic virtual-keyboard behavior, and enables arrow-key navigation. Menu and keyboard icons are configurable separately for block and inline fields.
+Default behavior enables MathLive globally and for block equations, disables inline MathLive, places inline widgets on the left, keeps original MathJax visible, updates source immediately, uses automatic virtual-keyboard behavior, and enables arrow-key navigation. Menu and keyboard icons are configurable separately for block and inline fields. Right-side inline placement enables the experimental private CodeMirror focus-preservation path.
 
 Macro, shortcut, and keybinding settings are parsed with JSON5. Invalid values produce an Obsidian notice and are logged to the console. MathLive macros do not automatically affect Obsidian's MathJax renderer; users can copy generated `\newcommand` declarations when MathJax also needs them.
 

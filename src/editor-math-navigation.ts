@@ -80,13 +80,17 @@ export function createMathNavigation(
 		keymap.of([
 			arrowEnterBinding(
 				"ArrowRight",
-				(e, head, doc) => head === getMathNavigationPositions(doc, e).backwardBoundary,
+				(e, head, doc) => head === getMathNavigationPositions(
+					doc, e, settings.inlineWidgetPosition
+				).backwardBoundary,
 				true,
 				settings
 			),
 			arrowEnterBinding(
 				"ArrowLeft",
-				(e, head, doc) => head === getMathNavigationPositions(doc, e).forwardBoundary,
+				(e, head, doc) => head === getMathNavigationPositions(
+					doc, e, settings.inlineWidgetPosition
+				).forwardBoundary,
 				false,
 				settings
 			),
@@ -141,7 +145,9 @@ export function createMathNavigation(
 					 * - detect "skipping" a folded formula line when moving down
 					 */
 					const owningLine = (e: MathFieldEntry) =>
-						doc.lineAt(getMathNavigationPositions(doc, e).owningPosition).number;
+						doc.lineAt(getMathNavigationPositions(
+							doc, e, settings.inlineWidgetPosition
+						).owningPosition).number;
 
 					/**
 					 * Return the block-math widget whose owning source line is `lineNo`, if any.
@@ -226,7 +232,9 @@ export function createMathNavigation(
 				"ArrowUp",
 				(e, head, doc) => {
 					if (e.isInline) return false;
-					const positions = getMathNavigationPositions(doc, e);
+					const positions = getMathNavigationPositions(
+						doc, e, settings.inlineWidgetPosition
+					);
 					return doc.lineAt(head).number === doc.lineAt(positions.forwardBoundary).number;
 				},
 				false,

@@ -8,6 +8,7 @@ import type {
 
 export type TouchKeyboardProvider = "mathlive" | "system" | "disabled";
 export type MathVirtualKeyboardMode = VirtualKeyboardPolicy | "always";
+export type InlineWidgetPosition = "left" | "right";
 
 export interface ParsedMathLiveSettings {
 	macros: MacroDictionary | null;
@@ -30,6 +31,7 @@ export interface MathLiveEditorModePluginSettings {
 	blockMenuIcon: boolean;
 	blockKeyboardIcon: boolean;
 	inlineDisplay: boolean;
+	inlineWidgetPosition: InlineWidgetPosition;
 	hideMathJaxInline: boolean;
 	inlineMenuIcon: boolean;
 	inlineKeyboardIcon: boolean;
@@ -50,6 +52,7 @@ export const DEFAULT_SETTINGS: MathLiveEditorModePluginSettings = {
 	blockMenuIcon: true,
 	blockKeyboardIcon: true,
 	inlineDisplay: false,
+	inlineWidgetPosition: "left",
 	hideMathJaxInline: false,
 	inlineMenuIcon: false,
 	inlineKeyboardIcon: false,

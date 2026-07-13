@@ -32,7 +32,7 @@ export function buildMathLiveDecorations(
 				from: begin,
 				to: end,
 				isInline,
-			}).decorationPosition;
+			}, settings.inlineWidgetPosition).decorationPosition;
 			if (!isInline || settings.inlineDisplay) {
 				builder.add(position, position, Decoration.widget({
 					widget: new MathLiveWidget(

@@ -7,6 +7,7 @@
 - [x] Toggle mathlive display (global, block or inline)
 - [x] Macro (sort of), shortcuts and keybindings support
 - [x] Switch between mathlive and builtin mathjax
+- [x] Place inline MathLive before or after the source equation
 - [ ] Different display modes
 
 ## Usage
@@ -25,6 +26,8 @@ If you want the new command to also show up in builtin mathjax block, you can us
 ## Bugfix TODO
 - [ ] Input issue in tablet/phone
 - [ ] Keep focus and immediate MathJax refresh with the inline MathLive field on the right. The current implementation is experimental and depends on internal editor behavior described below.
+
+The `Inline MathLive position` setting selects `Left` or `Right`. `Left` is the default for compatibility and uses the normal CodeMirror update path. `Right` enables the experimental focus-preservation path.
 
 ## Non-public APIs
 

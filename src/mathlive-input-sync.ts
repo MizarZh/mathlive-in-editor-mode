@@ -8,7 +8,7 @@ interface InputSyncOptions {
 	mfe: MathfieldElement;
 	view: EditorView;
 	settings: MathLiveEditorModePluginSettings;
-	isInline: boolean;
+	preserveInlineDom: boolean;
 	initialValue: string;
 	getEquation: () => string;
 	onEquationChange: (value: string) => void;
@@ -46,7 +46,7 @@ export function setupMathLiveInputSync(options: InputSyncOptions): void {
 		mfe,
 		view,
 		settings,
-		isInline,
+		preserveInlineDom,
 		initialValue,
 		getEquation,
 		onEquationChange,
@@ -59,23 +59,28 @@ export function setupMathLiveInputSync(options: InputSyncOptions): void {
 		if (Number.isNaN(from) || Number.isNaN(to)) return;
 		onEquationChange(newValue);
 		mfe.dataset.to = String(from + newValue.length);
-		const inputState = (view as unknown as {
-			inputState?: { composing: number };
-		}).inputState;
+		const inputState = preserveInlineDom
+			? (view as unknown as {
+				inputState?: { composing: number };
+			}).inputState
+			: undefined;
 		const previousComposing = inputState?.composing;
-		const inlineMath = isInline ? findPrecedingInlineMath(mfe) : null;
-		if (isInline && inputState) inputState.composing = 1;
+		const inlineMath = preserveInlineDom ? findPrecedingInlineMath(mfe) : null;
+		if (preserveInlineDom && inputState) inputState.composing = 1;
 		try {
-			view.dispatch({
+			const transaction = {
 				changes: { from, to, insert: newValue },
-				annotations: mathLiveInputTransaction.of(true),
-			});
+				...(preserveInlineDom
+					? { annotations: mathLiveInputTransaction.of(true) }
+					: {}),
+			};
+			view.dispatch(transaction);
 		} finally {
-			if (isInline && inputState && previousComposing !== undefined) {
+			if (preserveInlineDom && inputState && previousComposing !== undefined) {
 				inputState.composing = previousComposing;
 			}
 		}
-		if (isInline) refreshInlineMath(inlineMath, newValue);
+		if (preserveInlineDom) refreshInlineMath(inlineMath, newValue);
 	};
 
 	mfe.addEventListener("input", (event: InputEvent) => {

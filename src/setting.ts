@@ -115,6 +115,21 @@ export class MathLiveEditorModeSettingsTab extends PluginSettingTab {
 				});
 
 			new Setting(this.containerEl)
+				.setName("Inline MathLive position")
+				.setDesc("Place the MathLive field before or after the inline equation.")
+				.addDropdown((dropdown) => {
+					dropdown
+						.addOption("left", "Left")
+						.addOption("right", "Right")
+						.setValue(this.plugin.settings.inlineWidgetPosition)
+						.onChange(async (value) => {
+							if (value !== "left" && value !== "right") return;
+							this.plugin.settings.inlineWidgetPosition = value;
+							await this.plugin.saveSettings();
+						});
+				});
+
+			new Setting(this.containerEl)
 				.setName("Hide original inline equation")
 				.setDesc("When enabled, the original obsidian inline equation rendering is hidden in editor mode.")
 				.addToggle((cb) => {

@@ -73,7 +73,8 @@ export class MathLiveWidget extends WidgetType {
 			mfe,
 			view,
 			settings: this.settings,
-			isInline: this.isInline,
+			preserveInlineDom: this.isInline &&
+				this.settings.inlineWidgetPosition === "right",
 			initialValue: this.equation,
 			getEquation: () => this.equation,
 			onEquationChange: (value) => { this.equation = value; },
@@ -97,7 +98,7 @@ export class MathLiveWidget extends WidgetType {
 				from,
 				to,
 				isInline: this.isInline,
-			});
+			}, this.settings.inlineWidgetPosition);
 			const atStart = mfe.position === 0;
 			const atEnd = mfe.position === mfe.lastOffset;
 			if (ev.key === "ArrowLeft" && atStart) {

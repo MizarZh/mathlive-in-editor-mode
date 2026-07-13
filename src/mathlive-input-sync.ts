@@ -8,7 +8,8 @@ interface InputSyncOptions {
 	mfe: MathfieldElement;
 	view: EditorView;
 	settings: MathLiveEditorModePluginSettings;
-	preserveInlineDom: boolean;
+	preserveWidgetDom: boolean;
+	refreshInlinePreview: boolean;
 	initialValue: string;
 	getEquation: () => string;
 	onEquationChange: (value: string) => void;
@@ -54,7 +55,8 @@ export function setupMathLiveInputSync(options: InputSyncOptions): void {
 		mfe,
 		view,
 		settings,
-		preserveInlineDom,
+		preserveWidgetDom,
+		refreshInlinePreview,
 		initialValue,
 		getEquation,
 		onEquationChange,
@@ -62,7 +64,7 @@ export function setupMathLiveInputSync(options: InputSyncOptions): void {
 	mfe.dataset.initialValue = initialValue;
 	let focusedPreviousComposing: number | undefined;
 	const beginCompositionGuard = () => {
-		if (!preserveInlineDom || focusedPreviousComposing !== undefined) return;
+		if (!preserveWidgetDom || focusedPreviousComposing !== undefined) return;
 		const inputState = getCodeMirrorInputState(view);
 		if (!inputState) return;
 		focusedPreviousComposing = inputState.composing;
@@ -83,24 +85,24 @@ export function setupMathLiveInputSync(options: InputSyncOptions): void {
 		if (Number.isNaN(from) || Number.isNaN(to)) return;
 		onEquationChange(newValue);
 		mfe.dataset.to = String(from + newValue.length);
-		const inputState = preserveInlineDom ? getCodeMirrorInputState(view) : undefined;
+		const inputState = preserveWidgetDom ? getCodeMirrorInputState(view) : undefined;
 		const previousComposing = inputState?.composing;
-		const inlineMath = preserveInlineDom ? findPrecedingInlineMath(mfe) : null;
-		if (preserveInlineDom && inputState) inputState.composing = 1;
+		const inlineMath = refreshInlinePreview ? findPrecedingInlineMath(mfe) : null;
+		if (preserveWidgetDom && inputState) inputState.composing = 1;
 		try {
 			const transaction = {
 				changes: { from, to, insert: newValue },
-				...(preserveInlineDom
+				...(preserveWidgetDom
 					? { annotations: mathLiveInputTransaction.of(true) }
 					: {}),
 			};
 			view.dispatch(transaction);
 		} finally {
-			if (preserveInlineDom && inputState && previousComposing !== undefined) {
+			if (preserveWidgetDom && inputState && previousComposing !== undefined) {
 				inputState.composing = previousComposing;
 			}
 		}
-		if (preserveInlineDom) refreshInlineMath(inlineMath, newValue);
+		if (refreshInlinePreview) refreshInlineMath(inlineMath, newValue);
 	};
 
 	mfe.addEventListener("input", (event: InputEvent) => {

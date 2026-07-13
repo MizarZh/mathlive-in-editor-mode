@@ -34,12 +34,15 @@ export function buildMathLiveDecorations(
 				isInline,
 			}, settings.inlineWidgetPosition).decorationPosition;
 			if (!isInline || settings.inlineDisplay) {
+				// A right-side widget shares its document position with the cursor after it.
+				const side = !isInline ? 10 :
+					settings.inlineWidgetPosition === "right" ? -1 : 1;
 				builder.add(position, position, Decoration.widget({
 					widget: new MathLiveWidget(
 						{ from: begin, to: end }, mathContent, settings, isInline, global
 					),
 					block: !isInline,
-					side: isInline ? 1 : 10,
+					side,
 				}));
 			}
 			begin = end = -1;

@@ -81,10 +81,10 @@ export class MathLiveWidget extends WidgetType {
 		});
 
 		// Arrow keys at boundaries: exit to LaTeX (on wrapper, capture phase, so we run before MathLive)
-		const exitToEditor = (cursorPos: number) => {
+		const exitToEditor = (cursorPos: number, assoc = 0) => {
 			const docLen = view.state.doc.length;
 			if (cursorPos < 0 || cursorPos > docLen) return;
-			view.dispatch({ selection: EditorSelection.single(cursorPos) });
+			view.dispatch({ selection: EditorSelection.cursor(cursorPos, assoc) });
 			view.focus();
 		};
 		div.addEventListener("keydown", (ev: KeyboardEvent) => {
@@ -101,16 +101,18 @@ export class MathLiveWidget extends WidgetType {
 			}, this.settings.inlineWidgetPosition);
 			const atStart = mfe.position === 0;
 			const atEnd = mfe.position === mfe.lastOffset;
+			const rightInline = this.isInline &&
+				this.settings.inlineWidgetPosition === "right";
 			if (ev.key === "ArrowLeft" && atStart) {
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(positions.backwardBoundary);
+				exitToEditor(positions.backwardBoundary, rightInline ? -1 : 0);
 				return;
 			}
 			if (ev.key === "ArrowRight" && atEnd) {
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(positions.forwardBoundary);
+				exitToEditor(positions.forwardBoundary, rightInline ? 1 : 0);
 				return;
 			}
 
@@ -121,13 +123,13 @@ export class MathLiveWidget extends WidgetType {
 			if (ev.key === "ArrowUp" && atOutermost) {
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(positions.backwardBoundary);
+				exitToEditor(positions.backwardBoundary, rightInline ? -1 : 0);
 				return;
 			}
 			if (ev.key === "ArrowDown" && atOutermost) {
 				ev.preventDefault();
 				ev.stopPropagation();
-				exitToEditor(positions.forwardBoundary);
+				exitToEditor(positions.forwardBoundary, rightInline ? 1 : 0);
 				return;
 			}
 
